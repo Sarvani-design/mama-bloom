@@ -1,0 +1,21 @@
+{
+  "week": 14,
+  "mood": "Heavy",
+  "activities": [
+    {
+      "id": "extended_exhale",
+      "name": "Extended Exhale"
+    },
+    {
+      "id": "gratitude_journal",
+      "name": "Gratitude Journal"
+    },
+    {
+      "id": "bilateral_drawing",
+      "name": "Bilateral Drawing"
+    }
+  ],
+  "post_feeling": "pending",
+  "date": "2026-06-23",
+  "session_id": "session_20260623_183309_300023"
+}

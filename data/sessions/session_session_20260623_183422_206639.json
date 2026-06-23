@@ -1,0 +1,21 @@
+{
+  "week": 42,
+  "mood": "Tired",
+  "activities": [
+    {
+      "id": "body_scan",
+      "name": "Body Scan"
+    },
+    {
+      "id": "gratitude_journal",
+      "name": "Gratitude Journal"
+    },
+    {
+      "id": "evening_whisper",
+      "name": "Evening Whisper"
+    }
+  ],
+  "post_feeling": "pending",
+  "date": "2026-06-23",
+  "session_id": "session_20260623_183422_206639"
+}

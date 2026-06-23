@@ -1,10 +1,9 @@
 # Day 1: FastAPI web interface for Mama Bloom
 # Day 5: Deployable web app for Cloud Run
 
-import asyncio
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
-from app.agent import run_workflow
+from app.agent import _run_workflow_async
 from app.mcp_server import get_baby_book_entries
 
 app = FastAPI(title="Mama Bloom", description="Maternal wellbeing companion")
@@ -181,7 +180,7 @@ async def home():
     <p class="subtitle">25 minutes a day, just for you and your baby.</p>
     <form method="POST" action="/checkin">
         <label>Which week are you in?</label>
-        <input type="number" name="week" min="1" max="42" 
+        <input type="number" name="week" min="1" max="42"
                placeholder="e.g. 22" required>
         <label>How are you feeling today?</label>
         <select name="mood">
@@ -193,7 +192,7 @@ async def home():
             <option value="Uncomfortable">Uncomfortable</option>
         </select>
         <label>Anything on your mind? (optional)</label>
-        <textarea name="description" 
+        <textarea name="description"
                   placeholder="How are you feeling today?"></textarea>
         <button type="submit" class="btn">Start today with Bloom 🌸</button>
     </form>
@@ -207,7 +206,11 @@ async def checkin(
     mood: str = Form(...),
     description: str = Form(""),
 ):
-    state = run_workflow(week=week, mood=mood, description=description)
+    state = await _run_workflow_async(
+        week=week,
+        mood=mood,
+        description=description
+    )
 
     if state.get("is_crisis"):
         content = f"""
@@ -295,7 +298,7 @@ async def checkin(
                         display:block;
                         text-align:center;
                         margin-top:16px;">
-        ← Back to home
+        Back to home
     </a>
 
     <input type="hidden" id="session_id" value="{session_id}">
@@ -317,16 +320,18 @@ async def babybook():
         entries = []
 
     if not entries:
-        items = "<p style='color:#999;'>No entries yet. " \
-                "Complete your first session to begin your Baby Book.</p>"
+        items = (
+            "<p style='color:#999;'>No entries yet. "
+            "Complete your first session to begin your Baby Book.</p>"
+        )
     else:
         items = ""
         for e in entries:
             items += f"""
             <div class="card">
                 <div class="activity-duration">
-                    Week {e.get("week", "")} · 
-                    {e.get("date", "")} · 
+                    Week {e.get("week", "")} ·
+                    {e.get("date", "")} ·
                     {e.get("entry_type", "")}
                 </div>
                 <div class="activity-prompt">
@@ -336,14 +341,14 @@ async def babybook():
 
     content = f"""
     <h1>Your Baby Book</h1>
-    <p class="subtitle">Letters and reflections, 
+    <p class="subtitle">Letters and reflections,
        building week by week.</p>
     {items}
     <a href="/" style="color:#4CAF50;
                         display:block;
                         text-align:center;
                         margin-top:16px;">
-        ← Back to home
+        Back to home
     </a>
     """
     return HTMLResponse(base_page(content, "Baby Book"))
