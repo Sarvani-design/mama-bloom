@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.adk import Runner
 from google.adk.sessions import InMemorySessionService
-from google.adk.workflow import Edge, FunctionNode, Workflow
+from google.adk.workflow import Edge, FunctionNode, Workflow, START
 from google.genai import types
 
 from app.config import CRISIS_MESSAGE, WEEKLY_MILESTONES
@@ -251,6 +251,7 @@ _memory_node = FunctionNode(func=memory_saver, name="memory_saver")
 workflow = Workflow(
     name="mama_bloom",
     edges=[
+        (START, _safety_node),
         # safety_screen → crisis_response when route == "crisis"
         Edge(from_node=_safety_node, to_node=_crisis_node, route="crisis"),
         # safety_screen → activity_selector when route == "content"
