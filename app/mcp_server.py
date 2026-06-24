@@ -233,3 +233,7 @@ async def get_yesterday_activities() -> dict:
 
 def run_mcp_server():
     mcp.run(transport="stdio")
+
+
+if __name__ == "__main__":
+    run_mcp_server()

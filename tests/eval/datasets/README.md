@@ -73,6 +73,26 @@ user message; `eval generate` appends the next agent response.
 - `prompt`: A single user message — Shape A.
 - `agent_data.turns`: Prior conversation turns ending with a user message — Shape B.
 
+## Mama Bloom Intake Convention
+
+`mama-bloom-eval.json` drives `app/agent.py`'s real `Workflow` graph (the
+literal `root_agent`). The graph's structured inputs (pregnancy week, mood,
+free-text description) are normally seeded directly into session state by
+the production `/checkin` route, but `agents-cli eval generate` can only
+supply a single chat-shaped `prompt`, not separate state. The graph's first
+node, `intake_parser`, recognises this fixed text convention and parses it
+when state hasn't already been seeded:
+
+```
+Week: <int>. Mood: <text>. Message: <free text>
+```
+
+Use this convention for any new eval case targeting the check-in flow, e.g.:
+
+```json
+{"eval_case_id": "my_case", "prompt": {"role": "user", "parts": [{"text": "Week: 16. Mood: anxious. Message: I can't sleep"}]}}
+```
+
 ## Creating Custom Datasets
 
 You can create custom datasets in two ways:

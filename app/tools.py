@@ -71,12 +71,13 @@ def get_daily_plan(
     else:
         primary_mood = "okay"
 
-    # Map mood variations to our routing keys
+    # Map UI mood-chip labels to the closest mood category that actually
+    # has routing entries in config.py's MOOD_TO_* dicts.
     mood_map = {
-        "heavy": "heavy",
-        "okay": "okay",
-        "good": "good",
-        "glowing": "glowing",
+        "heavy": "sad",
+        "okay": "tired",
+        "good": "happy",
+        "glowing": "excited",
         "tired": "tired",
         "uncomfortable": "uncomfortable",
         "anxious": "anxious",

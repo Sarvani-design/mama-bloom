@@ -2,17 +2,42 @@
 # Day 5: Deployable web app for Cloud Run
 
 import datetime
+import html
 import uuid
+from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+from google.genai import types
 
-from app.agent import _run_workflow_async
+from app.agent import root_agent
+from app.mcp_client import start_mcp_client, stop_mcp_client
 from app.mcp_server import (
     get_baby_book_entries,
     get_sessions,
     save_baby_book_entry,
 )
+
+# Day 1: real ADK Runner - genuinely executes the Workflow graph in
+# app/agent.py, replacing the old hand-rolled _run_workflow_async.
+_session_service = InMemorySessionService()
+_runner = Runner(
+    agent=root_agent, session_service=_session_service, app_name="mama-bloom"
+)
+
+_PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Day 2: real MCP client - spawns mcp_server.py as a stdio subprocess
+    # and keeps one session open for the app's lifetime
+    await start_mcp_client(project_root=_PROJECT_ROOT)
+    yield
+    await stop_mcp_client()
 
 # ---------------------------------------------------------------------------
 # Activity lookup — resolves an activity ID string → full dict
@@ -25,8 +50,6 @@ try:
         BABY_CONNECT_ACTIVITIES,
         CREATIVE_ALTERNATES,
         MUSIC_ACTIVITY,
-        WEEKLY_REFLECTION,
-        LETTER_ACTIVITIES,
     )
 
     _ALL_ACTIVITIES: dict = {}
@@ -35,8 +58,7 @@ try:
         + JOURNALING_ACTIVITIES
         + BABY_CONNECT_ACTIVITIES
         + CREATIVE_ALTERNATES
-        + LETTER_ACTIVITIES
-        + [MUSIC_ACTIVITY, WEEKLY_REFLECTION]
+        + [MUSIC_ACTIVITY]
     ):
         _ALL_ACTIVITIES[_a["id"]] = _a
 except Exception:
@@ -56,6 +78,7 @@ def _resolve_activity(val) -> dict:
 app = FastAPI(
     title="Mama Bloom",
     description="Maternal wellbeing companion",
+    lifespan=lifespan,
 )
 
 DISCLAIMER = (
@@ -859,13 +882,30 @@ async def checkin(
 ):
     mood_list = [m.strip() for m in mood.split(",") if m.strip()]
     primary_mood = mood_list[0] if mood_list else "Okay"
+    mood_value = mood_list if len(mood_list) > 1 else primary_mood
 
-    state = await _run_workflow_async(
-        week=week,
-        mood=mood_list if len(mood_list) > 1 else primary_mood,
-        description=free_text,
-        free_text=free_text,
+    user_id = "checkin_user"
+    session = await _session_service.create_session(
+        app_name="mama-bloom",
+        user_id=user_id,
+        state={
+            "week": week,
+            "mood": mood_value,
+            "description": free_text,
+            "free_text": free_text,
+            "session_count": 0,
+        },
     )
+    placeholder = types.Content(role="user", parts=[types.Part.from_text(text="checkin")])
+    async for _event in _runner.run_async(
+        user_id=user_id, session_id=session.id, new_message=placeholder
+    ):
+        pass  # drain; only the final session state matters for this render
+
+    final_session = await _session_service.get_session(
+        app_name="mama-bloom", user_id=user_id, session_id=session.id
+    )
+    state = dict(final_session.state)
 
     nb = nav_bar("home")
 
@@ -900,7 +940,7 @@ async def checkin(
     total_sessions  = streak.get("total_sessions", 0)
     total_letters   = streak.get("total_letters", 0)
     current_streak  = streak.get("current_streak", 0)
-    mood_display = mood.replace(",", " · ")
+    mood_display = html.escape(mood.replace(",", " · "))
 
     # Resolve activity dicts (handles both ID strings and full dicts)
     b_act  = _resolve_activity(daily_plan.get("breathing", {}))
@@ -922,12 +962,14 @@ async def checkin(
         )
 
     # Gemini intro card (only if present)
+    # html.escape: intro is Gemini-generated text built from raw user
+    # free_text via the prompt - never trust LLM output as safe HTML.
     intro_html = ""
     if intro:
         intro_html = (
             "<div class='card'>"
             f"<p style='font-style:italic;color:#5C6B64;font-size:14px;"
-            f"font-family:Lora,serif;'>{intro}</p>"
+            f"font-family:Lora,serif;'>{html.escape(intro)}</p>"
             "</div>"
         )
 
@@ -936,7 +978,7 @@ async def checkin(
         # Morning affirmation — full-width, serene
         "<div class='card-green'>"
         "<div class='label-small'>Read this slowly</div>"
-        f"<div class='affirmation'>\"{affirmation}\"</div>"
+        f"<div class='affirmation'>\"{html.escape(affirmation)}\"</div>"
         "</div>"
         f"{intro_html}"
         f"{milestone_html}"
@@ -959,7 +1001,7 @@ async def checkin(
         "<div class='label-small' style='color:#8A9B94;'>"
         "Before bed, say this to your baby 🌙</div>"
         f"<div class='affirmation' style='color:#F7F3EE;font-size:18px;'>"
-        f"\"{whisper}\"</div>"
+        f"\"{html.escape(whisper)}\"</div>"
         "</div>"
         "<a href='/' class='back-link' "
         "style='display:block;text-align:center;margin-top:8px;'>"
@@ -992,7 +1034,7 @@ async def write_page(
         "<form method='POST' action='/save-entry'>"
         f"<input type='hidden' name='entry_type' value='{entry_type_val}'>"
         f"<input type='hidden' name='week' value='{week}'>"
-        f"<input type='hidden' name='activity_id' value='{activity_id}'>"
+        f"<input type='hidden' name='activity_id' value='{html.escape(activity_id)}'>"
         f"<textarea class='write-area' name='content' "
         f"placeholder='{placeholder}'></textarea>"
         "<button type='submit' class='btn'>Save to Baby Book 💌</button>"
@@ -1045,7 +1087,7 @@ async def save_entry(
         f"<div class='label-small'>Week {week} · {today}</div>"
         "<p style='font-family:Lora,serif;font-style:italic;"
         f"font-size:14px;color:#2C3E35;margin-top:6px;line-height:1.65;'>"
-        f"{preview}</p>"
+        f"{html.escape(preview)}</p>"
         "</div>"
         "<a href='/babybook'>"
         "<button class='btn' style='margin-top:8px;'>See your Baby Book 💌</button>"
@@ -1087,16 +1129,19 @@ async def babybook():
         items = ""
         for e in reversed(entries):
             entry_type  = e.get("entry_type", "entry")
-            type_label  = type_label_map.get(entry_type, entry_type.capitalize())
+            type_label  = type_label_map.get(entry_type, html.escape(entry_type.capitalize()))
             raw         = str(e.get("content", ""))
             preview     = raw[:220] + ("…" if len(raw) > 220 else "")
+            # html.escape: stored content the mother wrote on /write - this
+            # is persisted to disk and re-rendered on every /babybook load,
+            # so it must never be trusted as safe HTML.
             items += (
                 "<div class='entry-card'>"
                 "<div class='entry-meta'>"
-                f"Week {e.get('week', '')} &nbsp;·&nbsp;"
-                f"{e.get('date', '')} &nbsp;·&nbsp;"
+                f"Week {html.escape(str(e.get('week', '')))} &nbsp;·&nbsp;"
+                f"{html.escape(str(e.get('date', '')))} &nbsp;·&nbsp;"
                 f"{type_label}</div>"
-                f"<div class='entry-content'>{preview}</div>"
+                f"<div class='entry-content'>{html.escape(preview)}</div>"
                 "</div>"
             )
 
