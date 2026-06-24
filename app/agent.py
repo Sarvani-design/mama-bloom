@@ -13,7 +13,12 @@ from google.adk.apps import App
 from google.genai import types
 
 from app.config import CRISIS_MESSAGE, WEEKLY_MILESTONES
-from app.mcp_server import get_streak, get_yesterday_activities, save_baby_book_entry, save_session
+from app.mcp_server import (
+    get_streak,
+    get_yesterday_activities,
+    save_baby_book_entry,
+    save_session,
+)
 from app.tools import (
     detect_distress,
     get_daily_plan,
@@ -54,7 +59,7 @@ def crisis_response(state: dict) -> dict:
 async def activity_selector(state: dict) -> dict:
     # Day 1: ADK 2.0 LLM node - Gemini 2.0 Flash
     week: int = state.get("week", 12)
-    mood: str = state.get("mood", "okay")
+    mood = state.get("mood", "okay")
     session_count: int = state.get("session_count", 0)
 
     try:
@@ -70,6 +75,7 @@ async def activity_selector(state: dict) -> dict:
     if api_key:
         try:
             client = genai.Client(api_key=api_key)
+
             breathing_name = (
                 daily_plan["breathing"]["name"]
                 if isinstance(daily_plan.get("breathing"), dict)
@@ -85,16 +91,29 @@ async def activity_selector(state: dict) -> dict:
                 if isinstance(daily_plan.get("baby_connect"), dict)
                 else "baby connection activity"
             )
+
+            # Day 1: Gemini reads both selected moods and natural language
+            # Build rich mood context from multi-select and free text
+            mood_context = mood
+            if isinstance(mood, list):
+                mood_context = " and ".join(mood)
+            free_text = state.get("free_text", "")
+            if free_text:
+                mood_context = (
+                    f"{mood_context}. She also wrote: {free_text}"
+                )
+
             user_prompt = (
-                f"The mother is in week {week} of her pregnancy "
-                f"and is feeling {mood} today. "
+                f"The mother is in week {week} of her pregnancy. "
+                f"Her emotional state today: {mood_context}. "
                 f"Write ONE warm personalised introduction of maximum "
-                f"80 words that acknowledges her week and emotional "
-                f"state, then gently introduces today's three "
+                f"80 words that acknowledges her week and how she is "
+                f"feeling, then gently introduces today's three "
                 f"activities: {breathing_name}, {journaling_name}, "
                 f"and {baby_connect_name}. Be gentle, encouraging, "
                 f"and non-medical."
             )
+
             response = client.models.generate_content(
                 model="gemini-2.0-flash",
                 contents=user_prompt,
@@ -104,7 +123,9 @@ async def activity_selector(state: dict) -> dict:
                     temperature=0.8,
                 ),
             )
-            gemini_intro = response.text.strip() if response.text else ""
+            gemini_intro = (
+                response.text.strip() if response.text else ""
+            )
         except Exception as exc:
             gemini_intro = (
                 f"Welcome to your Week {week} daily check-in. "
@@ -138,7 +159,8 @@ def content_generator(state: dict) -> dict:
             milestone = WEEKLY_MILESTONES[sorted_weeks[0]]
     state["week_milestone"] = milestone
     state["session_id"] = (
-        f"session_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
+        f"session_"
+        f"{datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
     )
     state["daily_plan"] = daily_plan
     return state
@@ -148,10 +170,15 @@ async def memory_saver(state: dict) -> dict:
     # Day 2: MCP Server call
     # Day 3: Session memory - saves to persistent local storage
     week: int = state.get("week", 12)
-    mood: str = state.get("mood", "")
+    mood = state.get("mood", "")
     session_id: str = state.get("session_id", "")
     daily_plan: dict = state.get("daily_plan", {})
     today_str = datetime.date.today().isoformat()
+
+    # Normalise mood to string for storage
+    mood_str = (
+        ", ".join(mood) if isinstance(mood, list) else str(mood)
+    )
 
     activities_list = []
     for key in ("breathing", "journaling", "baby_connect"):
@@ -159,13 +186,13 @@ async def memory_saver(state: dict) -> dict:
         if isinstance(act, dict) and act.get("id"):
             activities_list.append({
                 "id": act["id"],
-                "name": act.get("name", "")
+                "name": act.get("name", ""),
             })
 
     try:
         await save_session(
             week=week,
-            mood=mood,
+            mood=mood_str,
             activities=activities_list,
             post_feeling="pending",
             date=today_str,
@@ -194,7 +221,9 @@ async def memory_saver(state: dict) -> dict:
                     entry_id=entry_id,
                 )
             except Exception as exc:
-                print(f"save_baby_book_entry failed for {key}: {exc}")
+                print(
+                    f"save_baby_book_entry failed for {key}: {exc}"
+                )
 
     state["saved"] = True
     return state
@@ -216,8 +245,9 @@ app = App(
 
 async def _run_workflow_async(
     week: int,
-    mood: str,
+    mood: str | list,
     description: str,
+    free_text: str = "",
     session_count: int = 0,
 ) -> dict:
     # Day 1: Manual graph execution - safety first, always
@@ -226,6 +256,7 @@ async def _run_workflow_async(
         "week": week,
         "mood": mood,
         "description": description,
+        "free_text": free_text,
         "session_count": session_count,
         "route": "",
     }
@@ -251,8 +282,9 @@ async def _run_workflow_async(
 
 def run_workflow(
     week: int,
-    mood: str,
+    mood: str | list,
     description: str,
+    free_text: str = "",
     session_count: int = 0,
 ) -> dict:
     import asyncio
@@ -261,6 +293,7 @@ def run_workflow(
             week=week,
             mood=mood,
             description=description,
+            free_text=free_text,
             session_count=session_count,
         )
     )

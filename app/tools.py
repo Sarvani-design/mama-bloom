@@ -55,129 +55,145 @@ def get_trimester(week: int) -> int:
         return 3
 
 
-def get_daily_plan(week: int, mood: str, yesterday_activities: dict) -> dict:
+def get_daily_plan(
+    week: int,
+    mood: str | list,
+    yesterday_activities: dict,
+) -> dict:
     # Day 1: Activity routing logic for ADK 2.0 agent
-    mood_key = mood.lower().strip()
+    # Accepts mood as single string or list for multi-select support
 
-    # Get preferred activity IDs based on user mood
-    pref_breathing = MOOD_TO_BREATHING.get(mood_key, [])
-    pref_journaling = MOOD_TO_JOURNALING.get(mood_key, [])
-    pref_baby_connect = MOOD_TO_BABY_CONNECT.get(mood_key, [])
+    # Normalise mood to a single primary mood string for routing
+    if isinstance(mood, list) and len(mood) > 0:
+        primary_mood = mood[0].lower()
+    elif isinstance(mood, str):
+        primary_mood = mood.lower()
+    else:
+        primary_mood = "okay"
 
-    # 1. Breathing activity selection
-    breathing_candidates = [
-        act
-        for act in BREATHING_ACTIVITIES
-        if act["id"] in pref_breathing
-        and isinstance(act["week_min"], int)
-        and isinstance(act["week_max"], int)
-        and act["week_min"] <= week <= act["week_max"]
-    ]
-    if not breathing_candidates:
-        breathing_candidates = [
-            act
-            for act in BREATHING_ACTIVITIES
-            if isinstance(act["week_min"], int)
-            and isinstance(act["week_max"], int)
-            and act["week_min"] <= week <= act["week_max"]
-        ]
+    # Map mood variations to our routing keys
+    mood_map = {
+        "heavy": "heavy",
+        "okay": "okay",
+        "good": "good",
+        "glowing": "glowing",
+        "tired": "tired",
+        "uncomfortable": "uncomfortable",
+        "anxious": "anxious",
+        "sad": "sad",
+    }
+    primary_mood = mood_map.get(primary_mood, "okay")
 
-    # Variety filter
-    yesterday_breathing = yesterday_activities.get("breathing")
-    filtered_breathing = [
-        act for act in breathing_candidates if act["id"] != yesterday_breathing
-    ]
-    selected_breathing = (
-        filtered_breathing[0]
-        if filtered_breathing
-        else (breathing_candidates[0] if breathing_candidates else None)
+    trimester = get_trimester(week)
+
+    # Get yesterday's activity IDs to enforce variety rule
+    yesterday_breathing = yesterday_activities.get("breathing", "")
+    yesterday_journaling = yesterday_activities.get("journaling", "")
+    yesterday_baby = yesterday_activities.get("baby_connect", "")
+
+    # Import activity lists
+    from app.config import (
+        BREATHING_ACTIVITIES,
+        JOURNALING_ACTIVITIES,
+        BABY_CONNECT_ACTIVITIES,
+        CREATIVE_ALTERNATES,
+        MUSIC_ACTIVITY,
+        MOOD_TO_BREATHING,
+        MOOD_TO_JOURNALING,
+        MOOD_TO_BABY_CONNECT,
+        WEEKLY_MILESTONES,
     )
 
-    # 2. Journaling activity selection
-    journaling_candidates = [
-        act
-        for act in JOURNALING_ACTIVITIES
-        if act["id"] in pref_journaling
-        and isinstance(act["week_min"], int)
-        and week >= act["week_min"]
-    ]
-    if not journaling_candidates:
+    def pick_activity(candidates: list, all_activities: list, yesterday_id: str) -> dict:
+        available = [
+            a for a in all_activities
+            if a["id"] in candidates
+            and a["id"] != yesterday_id
+            and week >= a.get("week_min", 0)
+            and week <= a.get("week_max", 42)
+        ]
+        if not available:
+            available = [
+                a for a in all_activities
+                if a["id"] in candidates
+                and week >= a.get("week_min", 0)
+                and week <= a.get("week_max", 42)
+            ]
+        return available[0] if available else {}
+
+    # Select breathing activity
+    breathing_candidates = MOOD_TO_BREATHING.get(
+        primary_mood,
+        MOOD_TO_BREATHING.get("okay", [])
+    )
+    breathing = pick_activity(
+        breathing_candidates,
+        BREATHING_ACTIVITIES,
+        yesterday_breathing
+    )
+
+    # Select journaling activity
+    # Enforce exclusive rule: self_compassion and free_mood_journal
+    # never on same day
+    journaling_candidates = MOOD_TO_JOURNALING.get(
+        primary_mood,
+        MOOD_TO_JOURNALING.get("okay", [])
+    )
+    if yesterday_journaling == "self_compassion":
         journaling_candidates = [
-            act
-            for act in JOURNALING_ACTIVITIES
-            if isinstance(act["week_min"], int) and week >= act["week_min"]
+            j for j in journaling_candidates
+            if j != "self_compassion"
         ]
-
-    # Variety filter
-    yesterday_journaling = yesterday_activities.get("journaling")
-    filtered_journaling = [
-        act for act in journaling_candidates if act["id"] != yesterday_journaling
-    ]
-    selected_journaling = (
-        filtered_journaling[0]
-        if filtered_journaling
-        else (journaling_candidates[0] if journaling_candidates else None)
+    if yesterday_journaling == "free_mood_journal":
+        journaling_candidates = [
+            j for j in journaling_candidates
+            if j != "free_mood_journal"
+        ]
+    journaling = pick_activity(
+        journaling_candidates,
+        JOURNALING_ACTIVITIES,
+        yesterday_journaling
     )
 
-    # 3. Baby connect activity selection
-    yesterday_baby_connect = yesterday_activities.get("baby_connect")
-    if week < 18:
-        # Pre-week 18: Swap to creative alternates
-        candidates = [
-            act
-            for act in CREATIVE_ALTERNATES
-            if isinstance(act["week_min"], int) and week >= act["week_min"]
-        ]
-        filtered_candidates = [
-            act for act in candidates if act["id"] != yesterday_baby_connect
-        ]
-        selected_baby_connect = (
-            filtered_candidates[0]
-            if filtered_candidates
-            else (candidates[0] if candidates else None)
+    # Select baby connect activity
+    # Tired or uncomfortable — music only
+    if primary_mood in ("tired", "uncomfortable"):
+        baby_connect = MUSIC_ACTIVITY
+    elif week < 18:
+        # Pre week 18 — use creative alternates
+        baby_connect = pick_activity(
+            [a["id"] for a in CREATIVE_ALTERNATES],
+            CREATIVE_ALTERNATES,
+            yesterday_baby
         )
     else:
-        # Week 18+: Spoken voice activities allowed
-        candidates = [
-            act
-            for act in BABY_CONNECT_ACTIVITIES
-            if act["id"] in pref_baby_connect
-            and isinstance(act["week_min"], int)
-            and week >= act["week_min"]
-        ]
-        if not candidates:
-            candidates = [
-                act
-                for act in BABY_CONNECT_ACTIVITIES
-                if isinstance(act["week_min"], int) and week >= act["week_min"]
-            ]
-        filtered_candidates = [
-            act for act in candidates if act["id"] != yesterday_baby_connect
-        ]
-        selected_baby_connect = (
-            filtered_candidates[0]
-            if filtered_candidates
-            else (candidates[0] if candidates else None)
+        baby_candidates = MOOD_TO_BABY_CONNECT.get(
+            primary_mood,
+            MOOD_TO_BABY_CONNECT.get("okay", [])
+        )
+        baby_connect = pick_activity(
+            baby_candidates,
+            BABY_CONNECT_ACTIVITIES,
+            yesterday_baby
         )
 
-    # 4. Milestone & Trimester
-    trimester = get_trimester(week)
-    milestone = WEEKLY_MILESTONES.get(week)
-
-    # 5. Calming music (tired/uncomfortable moods only)
-    selected_music = None
-    if mood_key in ["tired", "uncomfortable"]:
-        selected_music = MUSIC_ACTIVITY
+    # Get week milestone
+    sorted_weeks = sorted(WEEKLY_MILESTONES.keys())
+    eligible = [w for w in sorted_weeks if w <= week]
+    milestone = (
+        WEEKLY_MILESTONES[eligible[-1]]
+        if eligible
+        else WEEKLY_MILESTONES[sorted_weeks[0]]
+    )
 
     return {
-        "breathing": selected_breathing,
-        "journaling": selected_journaling,
-        "baby_connect": selected_baby_connect,
+        "breathing": breathing,
+        "journaling": journaling,
+        "baby_connect": baby_connect,
         "trimester": trimester,
         "week_milestone": milestone,
-        "music": selected_music,
+        "primary_mood": primary_mood,
     }
-
 
 def get_morning_affirmation(week: int, session_count: int) -> str:
     # Returns appropriate affirmation based on trimester
