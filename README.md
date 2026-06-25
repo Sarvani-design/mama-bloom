@@ -32,6 +32,39 @@ Mama Bloom is a mood-adaptive AI agent that:
 
 ---
 
+## Why Agents — Not Just a Form
+
+A static questionnaire or a content library could ask a mother her mood and
+hand back a pre-written PDF. That isn't what Mama Bloom does, and it
+couldn't do the job here. The reason agents are central, not decorative:
+
+- **Personalisation requires judgment, not a lookup table.** The same
+  "week 20, anxious" input has to resolve through mood × trimester × week ×
+  yesterday's-activity-variety rules simultaneously — and the warm,
+  specific introduction has to read as if someone actually noticed how she
+  described her day, not a templated string. That's a job for an agent
+  reasoning over context, not a static rule engine alone.
+- **Safety has to be a structural property of the architecture, not a
+  prompt instruction.** A single LLM call that's merely *told* "don't
+  ignore distress signals" can fail silently. Mama Bloom's graph makes
+  crisis routing a property of the graph itself — `safety_screen` is the
+  only node reachable from `START`, and `crisis_response` has zero edges
+  back into any LLM path. The agent's structure enforces the safety
+  guarantee; the model can't talk its way around it.
+- **The agent has to remember, across sessions, without a human in the
+  loop.** Building a Baby Book over 9 months means the agent reads its own
+  past activity history (via real MCP tool calls) every single day to
+  decide what's next — that's autonomous, stateful behavior a one-shot
+  form can't provide.
+
+In short: the mood-routing and crisis-safety logic needed to be
+deterministic and verifiable, so they're plain Python inside the graph —
+but the personalisation, the warmth, and the cross-session memory are
+exactly the parts that need an agent, and that's where Gemini and the MCP
+tool calls actually live in the architecture below.
+
+---
+
 ## What Makes It Different
 
 - 100% secular — no religious content, universally inclusive
@@ -143,6 +176,25 @@ Total time: approximately 25 minutes per day.
 
 ---
 
+## Screenshots
+
+The check-in form (mood, week, free-text) and the resulting daily plan,
+captured from the actual running app — the daily plan below was generated
+live by the real `Workflow` graph for a Week 20, "Good" mood check-in.
+
+<table>
+<tr>
+<td><img src="docs/screenshots/home.png" alt="Mama Bloom check-in form" width="380"></td>
+<td><img src="docs/screenshots/daily-plan.png" alt="Mama Bloom daily plan" width="380"></td>
+</tr>
+<tr>
+<td align="center">Daily check-in — week, mood, free text</td>
+<td align="center">Generated daily plan — affirmation, intro, milestone, activities</td>
+</tr>
+</table>
+
+---
+
 ## Safety System
 
 The safety_screen node runs before every LLM call. If distress 
@@ -232,43 +284,28 @@ gcloud run deploy mama-bloom --source . --region us-east1 --allow-unauthenticate
 ---
 
 ## Project Structure
+
+```
 mama-bloom/
-
 ├── app/
-
 │   ├── agent.py          # Real google.adk.workflow.Workflow graph
-
 │   ├── config.py         # 18 activities + routing rules
-
 │   ├── tools.py          # Safety functions + PII redaction
-
 │   ├── mcp_server.py     # MCP server with 6 tools (FastMCP, stdio)
-
 │   ├── mcp_client.py     # Real MCP client (stdio ClientSession)
-
 │   └── fast_api_app.py   # FastAPI web interface (Runner-driven /checkin)
-
 ├── tests/
-
 │   ├── conftest.py                          # tmp_data_dir + mechanical-scenario fixtures
-
 │   ├── unit/test_tools.py                   # deterministic safety/routing tests
-
 │   ├── integration/test_workflow.py         # real Workflow/Runner end-to-end tests
-
 │   └── eval/
-
-│       ├── datasets/mama-bloom-eval.json           # 5 scenarios, agents-cli eval format
-
+│       ├── datasets/mama-bloom-eval.json              # 5 scenarios, agents-cli eval format
 │       ├── datasets/mama-bloom-mechanical-cases.json  # same 5 scenarios, pytest format
-
-│       └── eval_config.yaml                        # 6 LLM-as-judge metrics
-
+│       └── eval_config.yaml                           # 6 LLM-as-judge metrics
 ├── CONTEXT.md            # Security standards
-
 ├── Dockerfile            # Cloud Run deployment
-
 └── pyproject.toml        # Dependencies
+```
 
 ---
 

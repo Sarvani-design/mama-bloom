@@ -45,10 +45,10 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 try:
     from app.config import (
-        BREATHING_ACTIVITIES,
-        JOURNALING_ACTIVITIES,
         BABY_CONNECT_ACTIVITIES,
+        BREATHING_ACTIVITIES,
         CREATIVE_ALTERNATES,
+        JOURNALING_ACTIVITIES,
         MUSIC_ACTIVITY,
     )
 
@@ -747,7 +747,7 @@ def activity_card(act: dict, pillar: str, week: int) -> str:
 
     dur_min = act.get("duration_min", 5)
     dur_max = act.get("duration_max", dur_min)
-    dur_str = f"{dur_min} min" if dur_min == dur_max else f"{dur_min}–{dur_max} min"
+    dur_str = f"{dur_min} min" if dur_min == dur_max else f"{dur_min}-{dur_max} min"
     pill_label = f"{pill_icon} {pill_label_base} · {dur_str}"
 
     name     = act.get("name", "")
@@ -875,7 +875,7 @@ async def home():
 
 @app.post("/checkin", response_class=HTMLResponse)
 async def checkin(
-    week: int = Form(...),
+    week: int = Form(..., ge=1, le=42),
     mood: str = Form("Okay"),
     free_text: str = Form(""),
     description: str = Form(""),
@@ -1049,7 +1049,7 @@ async def write_page(
 @app.post("/save-entry", response_class=HTMLResponse)
 async def save_entry(
     entry_type: str = Form("journal"),
-    week: int = Form(0),
+    week: int = Form(0, ge=0, le=42),
     content: str = Form(""),
     activity_id: str = Form(""),
 ):
@@ -1210,8 +1210,8 @@ async def calendar_page():
         + "".join(
             f"<span style='display:flex;align-items:center;gap:4px;'>"
             f"<span style='width:10px;height:10px;border-radius:2px;"
-            f"background:{c};display:inline-block;border:1px solid #D4C9BB;'></span>{l}</span>"
-            for l, c in [
+            f"background:{c};display:inline-block;border:1px solid #D4C9BB;'></span>{label}</span>"
+            for label, c in [
                 ("Good", "#D4E8DC"), ("Okay", "#EDF4F0"),
                 ("Heavy", "#FDF0EC"), ("Tired", "#FDF5E6"),
             ]

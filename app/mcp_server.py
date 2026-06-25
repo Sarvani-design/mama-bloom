@@ -6,6 +6,13 @@ from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
+from app.config import (
+    BABY_CONNECT_ACTIVITIES,
+    BREATHING_ACTIVITIES,
+    CREATIVE_ALTERNATES,
+    JOURNALING_ACTIVITIES,
+)
+
 mcp = FastMCP("mama-bloom-memory")
 
 # Paths configuration relative to workspace root
@@ -198,13 +205,6 @@ async def get_yesterday_activities() -> dict:
     result = {}
 
     # We map activity IDs to categories to satisfy variety rule lookup
-    from app.config import (
-        BABY_CONNECT_ACTIVITIES,
-        BREATHING_ACTIVITIES,
-        CREATIVE_ALTERNATES,
-        JOURNALING_ACTIVITIES,
-    )
-
     breathing_ids = {a["id"] for a in BREATHING_ACTIVITIES}
     journaling_ids = {a["id"] for a in JOURNALING_ACTIVITIES}
     baby_connect_ids = {a["id"] for a in BABY_CONNECT_ACTIVITIES} | {

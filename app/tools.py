@@ -92,19 +92,6 @@ def get_daily_plan(
     yesterday_journaling = yesterday_activities.get("journaling", "")
     yesterday_baby = yesterday_activities.get("baby_connect", "")
 
-    # Import activity lists
-    from app.config import (
-        BREATHING_ACTIVITIES,
-        JOURNALING_ACTIVITIES,
-        BABY_CONNECT_ACTIVITIES,
-        CREATIVE_ALTERNATES,
-        MUSIC_ACTIVITY,
-        MOOD_TO_BREATHING,
-        MOOD_TO_JOURNALING,
-        MOOD_TO_BABY_CONNECT,
-        WEEKLY_MILESTONES,
-    )
-
     def pick_activity(candidates: list, all_activities: list, yesterday_id: str) -> dict:
         available = [
             a for a in all_activities

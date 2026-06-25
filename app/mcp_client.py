@@ -1,6 +1,7 @@
 # Day 2: MCP client - connects to mcp_server.py over real stdio transport
 # instead of importing its tool functions in-process.
 
+import asyncio
 import json
 import sys
 from contextlib import AsyncExitStack
@@ -11,6 +12,28 @@ from mcp.types import CallToolResult
 
 _session: ClientSession | None = None
 _exit_stack: AsyncExitStack | None = None
+
+# Retries live here, not as ADK's per-node RetryConfig on memory_saver:
+# exhausting a workflow-level RetryConfig surfaces as a fatal ctx.error that
+# aborts the rest of the graph (see Known Limitations in README), which
+# would turn a flaky MCP write into a failed check-in. A bounded retry at
+# the transport layer recovers from transient subprocess hiccups while
+# preserving agent.py's own try/except as the final graceful-degradation
+# fallback if every attempt fails.
+_MAX_ATTEMPTS = 3
+_RETRY_DELAY_SECONDS = 0.5
+
+
+async def _call_tool_with_retry(name: str, arguments: dict) -> CallToolResult:
+    last_exc: Exception | None = None
+    for attempt in range(1, _MAX_ATTEMPTS + 1):
+        try:
+            return await _session.call_tool(name, arguments=arguments)
+        except Exception as exc:
+            last_exc = exc
+            if attempt < _MAX_ATTEMPTS:
+                await asyncio.sleep(_RETRY_DELAY_SECONDS * attempt)
+    raise last_exc
 
 
 async def start_mcp_client(project_root: str) -> None:
@@ -45,20 +68,20 @@ def _unwrap(result: CallToolResult) -> dict:
 
 
 async def save_session(**kwargs) -> dict:
-    result = await _session.call_tool("save_session", arguments=kwargs)
+    result = await _call_tool_with_retry("save_session", kwargs)
     return _unwrap(result)
 
 
 async def get_streak() -> dict:
-    result = await _session.call_tool("get_streak", arguments={})
+    result = await _call_tool_with_retry("get_streak", {})
     return _unwrap(result)
 
 
 async def save_baby_book_entry(**kwargs) -> dict:
-    result = await _session.call_tool("save_baby_book_entry", arguments=kwargs)
+    result = await _call_tool_with_retry("save_baby_book_entry", kwargs)
     return _unwrap(result)
 
 
 async def get_yesterday_activities() -> dict:
-    result = await _session.call_tool("get_yesterday_activities", arguments={})
+    result = await _call_tool_with_retry("get_yesterday_activities", {})
     return _unwrap(result)
