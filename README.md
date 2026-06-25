@@ -8,6 +8,10 @@
 **Kaggle 5-Day AI Agents Intensive Capstone Project — Agents for Good Track**  
 **Deadline: July 6, 2026**
 
+This README covers setup, architecture, and course-concept mapping. For the
+narrative submission piece — problem, solution, and the project's journey —
+see [WRITEUP.md](WRITEUP.md).
+
 ---
 
 ## The Problem
