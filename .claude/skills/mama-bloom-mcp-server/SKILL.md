@@ -40,41 +40,58 @@ Storage is **one JSON file per record** (not a single array file):
 `.gitignore` (`data/sessions/`, `data/baby_book/`) — real check-in/mood
 data must never be committed.
 
-## The real 6 tools — exact signatures
+## The real 6 tools — exact signatures (all `user_id`-scoped)
+
+**Every tool takes `user_id` and either stores it (writes) or filters by it
+(reads).** This isn't optional decoration — a security review found that
+`get_sessions`/`get_baby_book_entries`/`get_streak`/`get_yesterday_activities`
+originally had no ownership concept at all, so any visitor to a deployed
+instance could read every other visitor's journal entries and mood history
+via `/babybook`/`/calendar`. Never remove the `user_id` parameter or the
+`if record.get("user_id") == user_id` filter from any of these — that
+filter *is* the access-control boundary, not a nice-to-have.
 
 ```python
 @mcp.tool()
-async def save_session(week: int, mood: str, activities: list, post_feeling: str,
-                        date: str, session_id: str) -> dict:
-    ...
+async def save_session(user_id: str, week: int, mood: str, activities: list,
+                        post_feeling: str, date: str, session_id: str) -> dict:
+    ...   # writes user_id into the stored JSON record
     return {"saved": True, "total_sessions": count}
 
 @mcp.tool()
-async def save_baby_book_entry(entry_type: str, week: int, content: str,
+async def save_baby_book_entry(user_id: str, entry_type: str, week: int, content: str,
                                 date: str, entry_id: str) -> dict:
-    ...
+    ...   # writes user_id into the stored JSON record
     return {"saved": True, "total_entries": count}
 
 @mcp.tool()
-async def get_sessions(limit: int = 10) -> list: ...   # sorted descending by date
+async def get_sessions(user_id: str, limit: int = 10) -> list: ...
+    # filters to session.get("user_id") == user_id before sorting descending by date
 
 @mcp.tool()
-async def get_baby_book_entries() -> list: ...          # sorted ascending by date
+async def get_baby_book_entries(user_id: str) -> list: ...
+    # filters to entry.get("user_id") == user_id before sorting ascending by date
 
 @mcp.tool()
-async def get_streak() -> dict:
-    ...
+async def get_streak(user_id: str) -> dict:
+    ...   # total_sessions/total_days/current_streak/total_letters all computed
+    # only over this user_id's own records
     return {"current_streak": int, "total_days": int, "total_letters": int, "total_sessions": int}
 
 @mcp.tool()
-async def get_yesterday_activities() -> dict:
+async def get_yesterday_activities(user_id: str) -> dict:
     # Used by the variety rule (never repeat same activity 2 days running).
-    # Reads the single most recent session by date, maps its activity IDs
-    # back to {"breathing": id, "journaling": id, "baby_connect": id} by
-    # checking membership against BREATHING_ACTIVITIES / JOURNALING_ACTIVITIES /
+    # Filters sessions to this user_id first, then reads the single most
+    # recent one by date, maps its activity IDs back to
+    # {"breathing": id, "journaling": id, "baby_connect": id} by checking
+    # membership against BREATHING_ACTIVITIES / JOURNALING_ACTIVITIES /
     # (BABY_CONNECT_ACTIVITIES | CREATIVE_ALTERNATES) id sets.
     ...
 ```
+
+Records written before this fix have no `"user_id"` key at all — that's
+fine, they simply match no `user_id` going forward (effectively invisible
+to everyone) rather than leaking into a new visitor's view.
 
 `get_streak()`'s streak calculation only counts a streak if today OR
 yesterday has a session — a gap of 2+ days resets `current_streak` to 0,
@@ -143,21 +160,27 @@ fails.
 ## How `memory_saver` (in `app/agent.py`) actually uses this
 
 ```python
-async def memory_saver(ctx: Context, week: int, mood, session_id: str, daily_plan: dict) -> types.Content:
+async def memory_saver(ctx: Context, week: int, mood, session_id: str, daily_plan: dict,
+                        user_id: str = "anonymous") -> types.Content:
     try:
-        await save_session(week=week, mood=mood_str, activities=activities_list,
+        await save_session(user_id=user_id, week=week, mood=mood_str, activities=activities_list,
                             post_feeling="pending", date=today_str, session_id=session_id)
     except Exception as exc:
         print(f"save_session failed: {exc}")
     try:
-        ctx.state["streak"] = await get_streak()
+        ctx.state["streak"] = await get_streak(user_id)
     except Exception as exc:
         ctx.state["streak"] = {}
     # For each activity with a truthy "baby_book" field, also call
-    # save_baby_book_entry(entry_type="milestone", ...) — wrapped in its
-    # own try/except per activity.
+    # save_baby_book_entry(user_id=user_id, entry_type="milestone", ...) —
+    # wrapped in its own try/except per activity.
     ctx.state["saved"] = True
 ```
+
+`user_id` itself comes from `ctx.state["user_id"]`, set by `intake_parser`
+from `fast_api_app.py`'s per-visitor cookie (see `mama-bloom-fastapi`
+skill) — see `mama-bloom-adk-workflow`'s "user_id flows through the whole
+graph" section.
 
 Every MCP call in `memory_saver` is individually try/except-wrapped — one
 failed save must never prevent the others or fail the whole check-in.

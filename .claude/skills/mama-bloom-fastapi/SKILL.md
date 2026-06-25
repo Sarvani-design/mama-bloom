@@ -40,26 +40,56 @@ _session_service = InMemorySessionService()
 _runner = Runner(agent=root_agent, session_service=_session_service, app_name="mama-bloom")
 
 @app.post("/checkin", response_class=HTMLResponse)
-async def checkin(week: int = Form(..., ge=1, le=42), mood: str = Form("Okay"),
+async def checkin(request: Request, week: int = Form(..., ge=1, le=42), mood: str = Form("Okay"),
                    free_text: str = Form(""), description: str = Form("")):
+    visitor_id = _get_visitor_id(request)
     session = await _session_service.create_session(
-        app_name="mama-bloom", user_id=user_id,
+        app_name="mama-bloom", user_id=visitor_id,
         state={"week": week, "mood": mood_value, "description": free_text,
-               "free_text": free_text, "session_count": 0},
+               "free_text": free_text, "session_count": 0, "user_id": visitor_id},
     )
     placeholder = types.Content(role="user", parts=[types.Part.from_text(text="checkin")])
-    async for _event in _runner.run_async(user_id=user_id, session_id=session.id, new_message=placeholder):
+    async for _event in _runner.run_async(user_id=visitor_id, session_id=session.id, new_message=placeholder):
         pass   # drain; only the final session state matters for rendering
-    final_session = await _session_service.get_session(app_name="mama-bloom", user_id=user_id, session_id=session.id)
+    final_session = await _session_service.get_session(app_name="mama-bloom", user_id=visitor_id, session_id=session.id)
     state = dict(final_session.state)
     if state.get("is_crisis"):
         # render crisis page — checks state["is_crisis"], not state["route"] == "crisis"
         ...
+    return _with_visitor_cookie(HTMLResponse(...), visitor_id)   # every return point, not just one
 ```
 
 Crisis detection in the rendering code checks `state.get("is_crisis")` (a
 bool set by `crisis_response`), not a `route` field — match this when
 adding new branches.
+
+## Per-visitor identity — `_get_visitor_id`/`_with_visitor_cookie`
+
+A security review found `/babybook` and `/calendar` had no ownership
+scoping at all — any visitor could read every other visitor's journal
+entries and mood history. The fix is a persistent, login-free identity via
+an `HttpOnly` cookie:
+
+```python
+_VISITOR_COOKIE = "mama_bloom_uid"
+
+def _get_visitor_id(request: Request) -> str:
+    return request.cookies.get(_VISITOR_COOKIE) or secrets.token_hex(16)
+
+def _with_visitor_cookie(response: HTMLResponse, visitor_id: str) -> HTMLResponse:
+    response.set_cookie(_VISITOR_COOKIE, visitor_id, max_age=60 * 60 * 24 * 365,
+                         httponly=True, samesite="lax")
+    return response
+```
+
+**Every route that reads or writes MCP data must call `_get_visitor_id(request)`
+and pass the result into the MCP call, and every `HTMLResponse` it returns
+must go through `_with_visitor_cookie(...)`** — not just the first return
+point. `/checkin` has two (crisis path + normal path); `/save-entry`,
+`/babybook`, and `/calendar` each have one. `/write` and `/` don't touch
+MCP data, so they don't need this. If you add a new route that reads or
+writes `data/sessions/`/`data/baby_book/` content, it needs both halves of
+this pattern or you've reintroduced the same cross-user leak.
 
 ## Medical disclaimer — enforced structurally via `base_page()`
 

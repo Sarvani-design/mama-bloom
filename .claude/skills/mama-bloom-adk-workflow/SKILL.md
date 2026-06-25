@@ -56,7 +56,10 @@ Mother input (week, mood, description)
         │           agents-cli eval's "Week: X. Mood: Y. Message: Z" text)
         ▼
    safety_screen   (no LLM — PII redaction + distress detection,
-        │           sets ctx.route = "crisis" | "normal")
+        │           sets ctx.route = "crisis" | "normal". Redacts BOTH
+        │           clean_description AND free_text - intro_writer's
+        │           Gemini prompt is built from free_text, so redacting
+        │           only clean_description was a real PII-leak bug.)
         ├── crisis ──────────► crisis_response  (NO LLM EVER — terminal,
         │                       zero google.genai references anywhere
         │                       in its body; this is a structural
@@ -102,6 +105,20 @@ app = App(root_agent=root_agent, name="mama-bloom")
   conditional routing keyed by `ctx.route`, set inside the upstream node.
 - A tuple of more than 2 nodes (`(activity_picker, intro_writer, content_generator, memory_saver)`)
   chains them sequentially.
+
+## `user_id` flows through the whole graph — never bypass it
+
+Every node that touches MCP (`activity_picker`'s `get_yesterday_activities`,
+`memory_saver`'s `save_session`/`get_streak`/`save_baby_book_entry`) takes a
+`user_id: str = "anonymous"` parameter and passes it straight through.
+`intake_parser` is the only node that *sets* it
+(`ctx.state["user_id"] = user_id or "anonymous"`), seeded from
+`fast_api_app.py`'s per-visitor cookie (see `mama-bloom-fastapi` skill) or
+defaulted for the `agents-cli eval` harness, which has no cookie. This is a
+real security boundary, not decoration — see `mama-bloom-mcp-server`'s
+"Day 4" notes: without it, every visitor's check-ins and Baby Book entries
+are visible to every other visitor. If you add a new node that reads or
+writes MCP data, it must take and forward `user_id` too.
 
 ## Critical state-passing rule — the #1 mistake to avoid
 

@@ -95,6 +95,11 @@ exact text if it ever needs editing, and keep both helpline numbers
 ```python
 def safety_screen(ctx: Context, description: str) -> None:
     ctx.state["clean_description"] = redact_pii(description)
+    # free_text is the same raw input as description, and is what
+    # activity_picker/intro_writer actually send to Gemini - redact it
+    # too. A security review found this missing: redacting only
+    # clean_description left a real PII-to-Gemini leak via free_text.
+    ctx.state["free_text"] = ctx.state["clean_description"]
     if detect_distress(ctx.state["clean_description"]):
         ctx.route = "crisis"
     else:
@@ -153,3 +158,5 @@ api_key = os.environ.get("GEMINI_API_KEY", "")     # never hardcoded
 - [ ] Medical disclaimer rendered via `base_page()`, not hand-pasted per route
 - [ ] Any newly-rendered user-authored or LLM-generated text is `html.escape()`d
 - [ ] `data/sessions/` and `data/baby_book/` are not exposed via any API endpoint
+- [ ] `free_text`, not just `clean_description`, is redacted in `safety_screen` (it's what actually reaches the Gemini prompt)
+- [ ] Any new MCP read/write route calls `_get_visitor_id(request)` and passes `user_id` through — see `mama-bloom-fastapi`/`mama-bloom-mcp-server` skills
