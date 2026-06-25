@@ -54,6 +54,7 @@ def intake_parser(
     week: int | None = None,
     mood: str | list | None = None,
     description: str | None = None,
+    user_id: str | None = None,
 ) -> None:
     # Day 1: graph entry point - the only node reachable from START.
     # Normalises structured input from either the production /checkin
@@ -78,12 +79,22 @@ def intake_parser(
     ctx.state["description"] = description
     ctx.state.setdefault("free_text", description)
     ctx.state.setdefault("session_count", 0)
+    # Day 4: per-visitor identity, used to scope all MCP reads/writes so
+    # one mother's check-ins, mood history, and Baby Book entries are never
+    # visible to another visitor of the deployed app. Falls back to a
+    # fixed value for the agents-cli eval harness, which has no cookie.
+    ctx.state["user_id"] = user_id or "anonymous"
 
 
 def safety_screen(ctx: Context, description: str) -> None:
     # Day 4: Safety guardrail - ALWAYS runs first (directly after
     # intake_parser), ALWAYS before any LLM call.
     ctx.state["clean_description"] = redact_pii(description)
+    # free_text is the same raw user input as description (see
+    # intake_parser) and is what activity_picker/intro_writer actually
+    # send to Gemini - redact it too, or PII typed into the free-text box
+    # would reach the LLM unredacted despite clean_description existing.
+    ctx.state["free_text"] = ctx.state["clean_description"]
     if detect_distress(ctx.state["clean_description"]):
         ctx.route = "crisis"
     else:
@@ -108,10 +119,11 @@ async def activity_picker(
     mood: str | list,
     free_text: str = "",
     session_count: int = 0,
+    user_id: str = "anonymous",
 ) -> None:
     # Day 1: deterministic activity routing - pure Python, no LLM.
     try:
-        yesterday_activities = await get_yesterday_activities()
+        yesterday_activities = await get_yesterday_activities(user_id)
     except Exception:
         yesterday_activities = {}
 
@@ -228,6 +240,7 @@ async def memory_saver(
     mood: str | list,
     session_id: str,
     daily_plan: dict,
+    user_id: str = "anonymous",
 ) -> types.Content:
     # Day 2: real MCP client call (app/mcp_client.py - stdio transport)
     # Day 3: session memory - saves to persistent local storage
@@ -243,6 +256,7 @@ async def memory_saver(
 
     try:
         await save_session(
+            user_id=user_id,
             week=week,
             mood=mood_str,
             activities=activities_list,
@@ -254,7 +268,7 @@ async def memory_saver(
         print(f"save_session failed: {exc}")
 
     try:
-        ctx.state["streak"] = await get_streak()
+        ctx.state["streak"] = await get_streak(user_id)
     except Exception as exc:
         ctx.state["streak"] = {}
         print(f"get_streak failed: {exc}")
@@ -265,6 +279,7 @@ async def memory_saver(
             try:
                 entry_id = f"bb_{session_id}_{key}"
                 await save_baby_book_entry(
+                    user_id=user_id,
                     entry_type="milestone",
                     week=week,
                     content=str(act.get("baby_book", "")),

@@ -38,6 +38,7 @@ def parse_date(date_str: str) -> datetime.date | None:
 
 @mcp.tool()
 async def save_session(
+    user_id: str,
     week: int,
     mood: str,
     activities: list,
@@ -46,7 +47,11 @@ async def save_session(
     session_id: str,
 ) -> dict:
     # Day 3: Saves each check-in to persistent local storage
+    # Day 4: user_id scopes this session to one visitor, so get_sessions/
+    # get_streak/get_yesterday_activities never mix one mother's data into
+    # another's.
     session_data = {
+        "user_id": user_id,
         "week": week,
         "mood": mood,
         "activities": activities,
@@ -66,6 +71,7 @@ async def save_session(
 
 @mcp.tool()
 async def save_baby_book_entry(
+    user_id: str,
     entry_type: str,
     week: int,
     content: str,
@@ -73,7 +79,9 @@ async def save_baby_book_entry(
     entry_id: str,
 ) -> dict:
     # Day 3: Baby Book persistence - builds over 9 months
+    # Day 4: user_id scopes this entry to one visitor (see save_session).
     entry_data = {
+        "user_id": user_id,
         "entry_type": entry_type,
         "week": week,
         "content": content,
@@ -91,15 +99,18 @@ async def save_baby_book_entry(
 
 
 @mcp.tool()
-async def get_sessions(limit: int = 10) -> list:
+async def get_sessions(user_id: str, limit: int = 10) -> list:
     # Day 3: Retrieves mood history for adaptive logic
+    # Day 4: only this visitor's own sessions - see save_session.
     sessions = []
     for file_path in SESSIONS_DIR.glob("session_*.json"):
         try:
             with open(file_path, encoding="utf-8") as f:
-                sessions.append(json.load(f))
+                session = json.load(f)
         except (json.JSONDecodeError, OSError):
             continue
+        if session.get("user_id") == user_id:
+            sessions.append(session)
 
     # Sort descending by date
     sessions.sort(key=lambda s: s.get("date", ""), reverse=True)
@@ -107,15 +118,18 @@ async def get_sessions(limit: int = 10) -> list:
 
 
 @mcp.tool()
-async def get_baby_book_entries() -> list:
+async def get_baby_book_entries(user_id: str) -> list:
     # Day 3: Returns all Baby Book entries for display
+    # Day 4: only this visitor's own entries - see save_baby_book_entry.
     entries = []
     for file_path in BABY_BOOK_DIR.glob("entry_*.json"):
         try:
             with open(file_path, encoding="utf-8") as f:
-                entries.append(json.load(f))
+                entry = json.load(f)
         except (json.JSONDecodeError, OSError):
             continue
+        if entry.get("user_id") == user_id:
+            entries.append(entry)
 
     # Sort ascending by date
     entries.sort(key=lambda e: e.get("date", ""))
@@ -123,10 +137,19 @@ async def get_baby_book_entries() -> list:
 
 
 @mcp.tool()
-async def get_streak() -> dict:
+async def get_streak(user_id: str) -> dict:
     # Day 3: Streak tracking for progress display
+    # Day 4: scoped to this visitor only - see save_session.
     # 1. Total sessions
-    session_files = list(SESSIONS_DIR.glob("session_*.json"))
+    session_files = []
+    for file_path in SESSIONS_DIR.glob("session_*.json"):
+        try:
+            with open(file_path, encoding="utf-8") as f:
+                session = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            continue
+        if session.get("user_id") == user_id:
+            session_files.append(session)
     total_sessions = len(session_files)
 
     # 2. Total letters
@@ -136,22 +159,17 @@ async def get_streak() -> dict:
         try:
             with open(file_path, encoding="utf-8") as f:
                 entry = json.load(f)
-                if entry.get("entry_type") == "letter":
+                if entry.get("user_id") == user_id and entry.get("entry_type") == "letter":
                     total_letters += 1
         except (json.JSONDecodeError, OSError):
             continue
 
     # 3. Streak calculation
     dates = set()
-    for file_path in session_files:
-        try:
-            with open(file_path, encoding="utf-8") as f:
-                s = json.load(f)
-                d_parsed = parse_date(s.get("date", ""))
-                if d_parsed:
-                    dates.add(d_parsed)
-        except (json.JSONDecodeError, OSError):
-            continue
+    for session in session_files:
+        d_parsed = parse_date(session.get("date", ""))
+        if d_parsed:
+            dates.add(d_parsed)
 
     total_days = len(dates)
 
@@ -180,19 +198,18 @@ async def get_streak() -> dict:
 
 
 @mcp.tool()
-async def get_yesterday_activities() -> dict:
+async def get_yesterday_activities(user_id: str) -> dict:
     # Day 3: Used by variety rule - never repeat same activity two days in a row
-    session_files = list(SESSIONS_DIR.glob("session_*.json"))
-    if not session_files:
-        return {}
-
+    # Day 4: only this visitor's own sessions - see save_session.
     sessions = []
-    for file_path in session_files:
+    for file_path in SESSIONS_DIR.glob("session_*.json"):
         try:
             with open(file_path, encoding="utf-8") as f:
-                sessions.append(json.load(f))
+                session = json.load(f)
         except (json.JSONDecodeError, OSError):
             continue
+        if session.get("user_id") == user_id:
+            sessions.append(session)
 
     if not sessions:
         return {}

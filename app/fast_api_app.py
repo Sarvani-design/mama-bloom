@@ -3,6 +3,7 @@
 
 import datetime
 import html
+import secrets
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -29,6 +30,24 @@ _runner = Runner(
 )
 
 _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
+
+# Day 4: per-visitor identity (cookie-based, no login) - scopes every MCP
+# read/write to the visitor who made it, so one mother's check-ins and
+# Baby Book entries are never visible to another visitor of a deployed
+# instance. See app/mcp_server.py's user_id-scoped tools.
+_VISITOR_COOKIE = "mama_bloom_uid"
+
+
+def _get_visitor_id(request: Request) -> str:
+    return request.cookies.get(_VISITOR_COOKIE) or secrets.token_hex(16)
+
+
+def _with_visitor_cookie(response: HTMLResponse, visitor_id: str) -> HTMLResponse:
+    response.set_cookie(
+        _VISITOR_COOKIE, visitor_id,
+        max_age=60 * 60 * 24 * 365, httponly=True, samesite="lax",
+    )
+    return response
 
 
 @asynccontextmanager
@@ -875,6 +894,7 @@ async def home():
 
 @app.post("/checkin", response_class=HTMLResponse)
 async def checkin(
+    request: Request,
     week: int = Form(..., ge=1, le=42),
     mood: str = Form("Okay"),
     free_text: str = Form(""),
@@ -884,26 +904,27 @@ async def checkin(
     primary_mood = mood_list[0] if mood_list else "Okay"
     mood_value = mood_list if len(mood_list) > 1 else primary_mood
 
-    user_id = "checkin_user"
+    visitor_id = _get_visitor_id(request)
     session = await _session_service.create_session(
         app_name="mama-bloom",
-        user_id=user_id,
+        user_id=visitor_id,
         state={
             "week": week,
             "mood": mood_value,
             "description": free_text,
             "free_text": free_text,
             "session_count": 0,
+            "user_id": visitor_id,
         },
     )
     placeholder = types.Content(role="user", parts=[types.Part.from_text(text="checkin")])
     async for _event in _runner.run_async(
-        user_id=user_id, session_id=session.id, new_message=placeholder
+        user_id=visitor_id, session_id=session.id, new_message=placeholder
     ):
         pass  # drain; only the final session state matters for this render
 
     final_session = await _session_service.get_session(
-        app_name="mama-bloom", user_id=user_id, session_id=session.id
+        app_name="mama-bloom", user_id=visitor_id, session_id=session.id
     )
     state = dict(final_session.state)
 
@@ -928,7 +949,9 @@ async def checkin(
             "<a href='/'>"
             "<button class='btn-outline'>Return to home</button></a>"
         )
-        return HTMLResponse(base_page(content, "Mama Bloom — We See You"))
+        return _with_visitor_cookie(
+            HTMLResponse(base_page(content, "Mama Bloom — We See You")), visitor_id
+        )
 
     # ── Normal path ──────────────────────────────────────────────────────────
     affirmation  = state.get("morning_affirmation", "")
@@ -1008,7 +1031,9 @@ async def checkin(
         "← Back to home</a>"
         f"{CHECKIN_JS}"
     )
-    return HTMLResponse(base_page(content, f"Your Day — Week {week}"))
+    return _with_visitor_cookie(
+        HTMLResponse(base_page(content, f"Your Day — Week {week}")), visitor_id
+    )
 
 
 @app.get("/write", response_class=HTMLResponse)
@@ -1048,17 +1073,20 @@ async def write_page(
 
 @app.post("/save-entry", response_class=HTMLResponse)
 async def save_entry(
+    request: Request,
     entry_type: str = Form("journal"),
     week: int = Form(0, ge=0, le=42),
     content: str = Form(""),
     activity_id: str = Form(""),
 ):
+    visitor_id = _get_visitor_id(request)
     entry_id = str(uuid.uuid4())[:8]
     today    = datetime.date.today().isoformat()
     saved    = False
 
     try:
         await save_baby_book_entry(
+            user_id=visitor_id,
             entry_type=entry_type,
             week=week,
             content=content,
@@ -1096,13 +1124,16 @@ async def save_entry(
         "<button class='btn-outline'>Continue with today</button>"
         "</a>"
     )
-    return HTMLResponse(base_page(page_content, "Saved to Baby Book"))
+    return _with_visitor_cookie(
+        HTMLResponse(base_page(page_content, "Saved to Baby Book")), visitor_id
+    )
 
 
 @app.get("/babybook", response_class=HTMLResponse)
-async def babybook():
+async def babybook(request: Request):
+    visitor_id = _get_visitor_id(request)
     try:
-        entries = await get_baby_book_entries()
+        entries = await get_baby_book_entries(visitor_id)
     except Exception:
         entries = []
 
@@ -1151,13 +1182,14 @@ async def babybook():
         "<p class='subtitle'>Letters and reflections, building week by week.</p>"
         f"{items}"
     )
-    return HTMLResponse(base_page(content, "Baby Book"))
+    return _with_visitor_cookie(HTMLResponse(base_page(content, "Baby Book")), visitor_id)
 
 
 @app.get("/calendar", response_class=HTMLResponse)
-async def calendar_page():
+async def calendar_page(request: Request):
+    visitor_id = _get_visitor_id(request)
     try:
-        sessions = await get_sessions(limit=42)
+        sessions = await get_sessions(user_id=visitor_id, limit=42)
     except Exception:
         sessions = []
 
@@ -1237,7 +1269,7 @@ async def calendar_page():
         "<a href='/babybook'>"
         "<button class='btn-outline'>Open Baby Book 💌</button></a>"
     )
-    return HTMLResponse(base_page(content, "Your Journey"))
+    return _with_visitor_cookie(HTMLResponse(base_page(content, "Your Journey")), visitor_id)
 
 
 @app.post("/complete")

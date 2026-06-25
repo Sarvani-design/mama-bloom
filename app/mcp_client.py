@@ -72,8 +72,8 @@ async def save_session(**kwargs) -> dict:
     return _unwrap(result)
 
 
-async def get_streak() -> dict:
-    result = await _call_tool_with_retry("get_streak", {})
+async def get_streak(user_id: str) -> dict:
+    result = await _call_tool_with_retry("get_streak", {"user_id": user_id})
     return _unwrap(result)
 
 
@@ -82,6 +82,6 @@ async def save_baby_book_entry(**kwargs) -> dict:
     return _unwrap(result)
 
 
-async def get_yesterday_activities() -> dict:
-    result = await _call_tool_with_retry("get_yesterday_activities", {})
+async def get_yesterday_activities(user_id: str) -> dict:
+    result = await _call_tool_with_retry("get_yesterday_activities", {"user_id": user_id})
     return _unwrap(result)
