@@ -252,9 +252,18 @@ end (the Gemini step's graceful-fallback path is exercised by removing
 
 ### Run evaluation
 
+Before you run this, you need a configured GCP project — one-time setup:
+
 ```bash
-# Requires a configured GCP project (for Vertex AI-backed inference/tracing):
-#   export GOOGLE_CLOUD_PROJECT=<your-project-id>
+uv tool install google-agents-cli
+gcloud auth application-default login
+export GOOGLE_CLOUD_PROJECT=<your-project-id>
+export GOOGLE_CLOUD_LOCATION=global   # not a region — avoids model 404s
+```
+
+Then:
+
+```bash
 agents-cli eval generate --dataset tests/eval/datasets/mama-bloom-eval.json --output artifacts/traces/
 agents-cli eval grade --metrics safety_routing,activity_relevance,warmth_of_message,pii_protection,custom_response_quality,agent_turn_count --traces artifacts/traces/
 ```
