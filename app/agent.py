@@ -127,7 +127,7 @@ async def activity_picker(
     except Exception:
         yesterday_activities = {}
 
-    daily_plan = get_daily_plan(week, mood, yesterday_activities)
+    daily_plan = get_daily_plan(week, mood, yesterday_activities, free_text=free_text)
     morning_affirmation = get_morning_affirmation(week, session_count)
 
     breathing_name = (
@@ -186,27 +186,48 @@ def intro_writer(
             client = genai.Client(api_key=api_key)
         else:
             client = genai.Client(vertexai=True, project=project, location=location)
+        # Single call generates all three personalised texts so they are
+        # always fresh, mood-aware, and culturally grounded (MBCP + Garbha Sanskar).
+        # Sections are delimited by ### so parsing never relies on line counts.
         user_prompt = (
-            f"The mother is in week {week} of her pregnancy. "
-            f"Her emotional state today: {mood_context}. "
-            f"Write ONE warm personalised introduction of maximum "
-            f"80 words that acknowledges her week and how she is "
-            f"feeling, then gently introduces today's three "
-            f"activities: {breathing_name}, {journaling_name}, "
-            f"and {baby_connect_name}. Be gentle, encouraging, "
-            f"and non-medical."
+            f"Week: {week} | Mood: {mood_context}\n\n"
+            f"Generate exactly three sections separated by ### (no other text between them):\n"
+            f"AFFIRMATION: One first-person present-tense sentence (max 20 words) grounded "
+            f"in the science that maternal calm protects the baby.\n"
+            f"###\n"
+            f"INTRO: One warm paragraph (max 80 words) acknowledging her week and mood, "
+            f"then gently introducing today's three activities: {breathing_name}, "
+            f"{journaling_name}, and {baby_connect_name}. Be gentle, encouraging, non-medical.\n"
+            f"###\n"
+            f"WHISPER: One gentle sentence addressed to the baby starting with 'Little one,' "
+            f"(max 20 words), reflecting what this mother needs to say today."
         )
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=user_prompt,
             config=types.GenerateContentConfig(
                 system_instruction=_SYSTEM_PROMPT,
-                max_output_tokens=300,
-                temperature=0.8,
+                max_output_tokens=400,
+                temperature=0.85,
                 thinking_config=types.ThinkingConfig(thinking_budget=0),
             ),
         )
-        gemini_intro = response.text.strip() if response.text else ""
+        raw = response.text.strip() if response.text else ""
+        if raw and "###" in raw:
+            parts = [p.strip() for p in raw.split("###")]
+            if len(parts) >= 3:
+                affirmation_part = parts[0].removeprefix("AFFIRMATION:").strip()
+                intro_part = parts[1].removeprefix("INTRO:").strip()
+                whisper_part = parts[2].removeprefix("WHISPER:").strip()
+                if affirmation_part:
+                    ctx.state["morning_affirmation"] = affirmation_part
+                if intro_part:
+                    gemini_intro = intro_part
+                if whisper_part:
+                    ctx.state["evening_whisper"] = whisper_part
+        elif raw:
+            # Fallback: Gemini responded but didn't use ### — use as intro only
+            gemini_intro = raw
     except Exception as exc:
         print(f"Gemini call failed, using fallback intro: {exc}")
 
@@ -222,7 +243,10 @@ def intro_writer(
 
 def content_generator(ctx: Context, daily_plan: dict, week: int) -> None:
     # Day 1: builds complete daily plan - pure Python, no LLM needed.
-    ctx.state["evening_whisper"] = get_evening_whisper()
+    # Only use the static fallback whisper if intro_writer didn't already
+    # write a personalised Gemini-generated one into state.
+    if not ctx.state.get("evening_whisper"):
+        ctx.state["evening_whisper"] = get_evening_whisper()
 
     milestone = WEEKLY_MILESTONES.get(week)
     if milestone is None:

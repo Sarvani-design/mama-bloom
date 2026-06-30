@@ -31,8 +31,10 @@ CRISIS_MESSAGE = (
     "please call emergency services or go to your nearest hospital."
 )
 
-# Day 1: Self-compassion framed morning affirmations
+# Morning affirmations — MBCP-grounded + Garbha Sanskar framing (20 items)
+# Selected randomly each session so they never mechanically repeat.
 MORNING_AFFIRMATIONS = [
+    # MBCP self-compassion core
     "I am doing something remarkable. It is okay that it is hard.",
     "My body is strong, and I am doing enough every single day.",
     "It is okay to rest; I am nurturing a new life and myself.",
@@ -43,6 +45,36 @@ MORNING_AFFIRMATIONS = [
     "My mind and body deserve kindness and gentle care.",
     "I trust my journey and honor my changing needs.",
     "I am creating a safe, loving space for both of us.",
+    # Garbha Sanskar + cortisol-calm science (Georgia Tech / Nature 2024)
+    "Every calm breath I take sends peace and oxygen directly to my baby.",
+    "My thoughts and feelings shape the world my baby is growing into.",
+    "I choose peace today, and my baby feels it.",
+    "My body knows exactly what it is doing. I trust this ancient wisdom.",
+    "With each heartbeat, I send love to the little life growing inside me.",
+    # Mood-adaptive compassion
+    "Even on hard days, I am still nourishing my baby beautifully.",
+    "I do not need to be perfect to be a wonderful mother.",
+    "My gentleness with myself is a gift I give to my child.",
+    "I am not alone in this. My baby and I are doing this together.",
+    "This moment is enough. I am enough.",
+]
+
+# Evening whispers — for baby, changes nightly (14 items, random selection)
+EVENING_WHISPERS = [
+    "Today I did my best, little one.",
+    "You are so loved already.",
+    "We made it through today together.",
+    "I am learning, and that is enough.",
+    "You are safe, and so am I.",
+    "Thank you for growing so beautifully.",
+    "Tomorrow we get to try again.",
+    "Every heartbeat of mine is a lullaby for you.",
+    "I felt you with me today, even in the quiet moments.",
+    "Your presence makes me braver than I ever knew I could be.",
+    "Rest now, little one. We are safe, and morning is coming.",
+    "I whisper this so you know: you are already so deeply wanted.",
+    "The world you are coming into is full of people who will love you.",
+    "I am growing into your mother, one day at a time.",
 ]
 
 # Day 1: Breathing and somatic relaxation activities
@@ -161,6 +193,8 @@ JOURNALING_ACTIVITIES = [
         "prompt": "Write freely about whatever is on your mind right now. Let the thoughts flow.",
         "week_min": 1,
         "exclusive_with": None,
+        "science_note": "Expressive writing improves psychological and physical health (PMC 2013). Reduces prenatal stress and improves mood.",
+        "pillar": "Emotional release",
     },
     {
         "id": "gratitude_journal",
@@ -170,6 +204,8 @@ JOURNALING_ACTIVITIES = [
         "prompt": "List three things, big or small, that you are grateful for today.",
         "week_min": 1,
         "exclusive_with": None,
+        "science_note": "Shifts cognitive focus from threat to resource. Linked to lower prenatal anxiety across MBCP cohorts.",
+        "pillar": "Positive affect",
     },
     {
         "id": "self_compassion",
@@ -179,6 +215,8 @@ JOURNALING_ACTIVITIES = [
         "prompt": "Write down one difficulty you faced today, followed by words of understanding and kindness to yourself.",
         "week_min": 1,
         "exclusive_with": "free_mood_journal",
+        "science_note": "MBCP core practice. Reduces pain catastrophizing and fear of childbirth by 33% across RCTs.",
+        "pillar": "Self-compassion",
     },
     {
         "id": "birth_wishes",
@@ -188,6 +226,8 @@ JOURNALING_ACTIVITIES = [
         "prompt": "Imagine your ideal birth setting. What intentions, comfort measures, or thoughts do you want to carry with you?",
         "week_min": 14,
         "exclusive_with": None,
+        "science_note": "Childbirth self-efficacy is the single strongest predictor of positive birth experience (MBCP 2021 RCT).",
+        "pillar": "Agency",
     },
 ]
 
@@ -198,40 +238,50 @@ BABY_CONNECT_ACTIVITIES = [
         "name": "Daily Narration",
         "category": "Baby Connect",
         "description": "Describing your current surroundings or activities out loud to your baby.",
-        "prompt": "Take a moment to narrate what you are doing, seeing, or planning next to your baby.",
+        "prompt": "Take a moment to narrate what you are doing, seeing, or planning next to your baby. Use a warm, melodic tone — your baby is listening.",
         "week_min": 18,
+        "science_note": "Mother's voice is the predominant sensory input for the fetus (Univ. of Florida). Baby recognises familiar phrases by Week 34.",
+        "pillar": "Language exposure",
     },
     {
         "id": "story_time",
         "name": "Story Time",
         "category": "Baby Connect",
         "description": "Reading a book or telling a simple story aloud so your baby can hear your voice.",
-        "prompt": "Pick a favorite childhood story or read a few pages of your current book out loud to your baby.",
+        "prompt": "Pick a favorite childhood story, a scripture passage (Gita, Ramayana), or a children's book. Read slowly and clearly to your baby.",
         "week_min": 18,
+        "science_note": "Rhythmic cadence of reading calms the maternal HPA axis and familiarises the baby with speech patterns before birth.",
+        "pillar": "Bonding",
     },
     {
         "id": "humming_singing",
         "name": "Humming & Singing",
         "category": "Baby Connect",
         "description": "Humming a calm melody or singing a soft lullaby to share your breath's vibration.",
-        "prompt": "Hum a gentle tune or sing a soft song, resting your hand on your belly to feel the resonance.",
+        "prompt": "Hum a gentle tune or sing a Telugu or Hindi lullaby. Rest your hand on your belly to feel the resonance. Repeat the same melody daily — your baby is building memory.",
         "week_min": 18,
+        "science_note": "Maternal humming transmits vibration through amniotic fluid directly to baby. Builds fetal memory for lullabies (Garbha Sanskar).",
+        "pillar": "Garbha Sanskar",
     },
     {
         "id": "conversation_with_baby",
         "name": "Conversation with Baby",
         "category": "Baby Connect",
         "description": "Speaking directly to your baby about your hopes, love, or current thoughts.",
-        "prompt": "Share a few thoughts directly with your baby. Tell them what you hope to experience together.",
+        "prompt": "Share a few thoughts directly with your baby. Tell them what you felt today, what you hope for them, or simply say 'I love you' — slowly and warmly.",
         "week_min": 14,
+        "science_note": "Fetal heart decelerates on hearing the familiar maternal voice — a recognition signal (PubMed 2019). Strengthens prenatal attachment.",
+        "pillar": "Attachment",
     },
     {
         "id": "evening_whisper",
         "name": "Evening Whisper",
         "category": "Baby Connect",
         "description": "A soft bedtime whisper to say goodnight and share a peaceful intention.",
-        "prompt": "Whisper a gentle goodnight message to your baby before sleeping.",
+        "prompt": "Whisper a gentle goodnight message to your baby before sleeping. You might say: 'Little one, we made it through today together. Sleep well.'",
         "week_min": 1,
+        "science_note": "Consistent bedtime voice rituals build fetal memory and reinforce the maternal bond from the earliest weeks.",
+        "pillar": "Bonding",
     },
 ]
 
@@ -242,28 +292,65 @@ CREATIVE_ALTERNATES = [
         "name": "Bilateral Drawing",
         "category": "Creative Alternate",
         "description": "Drawing with both hands simultaneously to soothe the nervous system.",
-        "prompt": "Take a pen in each hand. Start at the center of a page and draw matching shapes outwards.",
+        "prompt": "Take a pen in each hand. Start at the center of a page and draw matching shapes outwards — circles, waves, leaves. Let both hands move together, slowly.",
         "week_min": 1,
+        "science_note": "Engages both brain hemispheres simultaneously. Calming through rhythmic bilateral movement. Helps regulate the nervous system (Expressive Monkey 2024).",
+        "pillar": "Nervous system regulation",
     },
     {
         "id": "symmetry_drawing",
         "name": "Symmetry Drawing",
         "category": "Creative Alternate",
         "description": "Focusing on drawing balanced, repeating geometric patterns.",
-        "prompt": "Draw a central axis, and build a symmetrical pattern or mandala shape outwards.",
+        "prompt": "Draw a central axis down the middle of a page. Build a symmetrical mandala or nature pattern outwards from the center. There are no rules — just balance.",
         "week_min": 1,
+        "science_note": "Bilateral coordination engages interhemispheric interaction, supporting focus and calm without physical exertion.",
+        "pillar": "Focus",
     },
 ]
 
-# Day 1: Calming music activity
+# Calming music / raga activity (for tired/uncomfortable moods)
 MUSIC_ACTIVITY = {
     "id": "calming_music",
-    "name": "Calming Music",
+    "name": "Calming Raga & Music",
     "category": "Music",
-    "description": "Listening to gentle, rhythmic music to relax the mind and body.",
-    "prompt": "Play some soft instrumental music, sit back, close your eyes, and listen for 5-10 minutes.",
+    "description": "Listening to gentle, rhythmic Indian classical music or a calming raga to relax the mind and body.",
+    "prompt": "Play a calming raga — Bhairavi, Yaman, or Darbari Kanada — or any soft instrumental music. Place your hand gently on your belly. Close your eyes and simply listen for 5–10 minutes. You do not need to do anything else.",
     "moods": ["tired", "uncomfortable"],
+    "science_note": "Music modulates fetal Autonomic Nervous System, enhancing Heart Rate Variability near term (PMC 2022). Indian ragas Bhairavi and Yaman are recommended in Garbha Sanskar for their calming effect.",
+    "pillar": "Garbha Sanskar",
 }
+
+# Research-based free-text keyword overrides (from MBCP + Garbha Sanskar matrix).
+# Each entry: (tuple_of_keywords, dict_of_category_to_activity_id).
+# In get_daily_plan(), these override the mood-chip routing when the mother's
+# free-text mentions a specific physical symptom or emotional signal.
+FREE_TEXT_KEYWORD_OVERRIDES = [
+    # Physical symptoms → minimal-effort, proven-effective activity
+    (("nausea", "nauseous", "morning sickness", "vomiting", "sick", "queasy"),
+     {"breathing": "extended_exhale"}),          # vagus nerve activation, no movement
+    (("back pain", "backache", "back ache", "lower back", "round ligament",
+      "aching back", "back hurts", "back is hurting", "back is paining",
+      "back paining", "back hurt"),
+     {"breathing": "body_scan"}),                # MBCP somatic scan for pain
+    (("headache", "head pain", "migraine", "head hurts"),
+     {"breathing": "box_breathing"}),            # regulated breathing for head tension
+    (("can't sleep", "cant sleep", "insomnia", "not sleeping", "awake all night", "sleepless"),
+     {"breathing": "body_scan"}),                # somatic scan → sleep preparation
+    # Emotional signals → research-matched activity
+    (("anxious", "anxiety", "panic", "overwhelmed", "stressed", "scared of birth", "scared of labour"),
+     {"breathing": "safe_place"}),               # safe place imagery (amygdala calming)
+    (("sad", "crying", "tears", "sobbing", "lonely", "alone", "depressed", "empty"),
+     {"journaling": "self_compassion"}),         # MBCP self-compassion letter
+    (("angry", "frustrat", "irritat", "rage", "furious"),
+     {"journaling": "free_mood_journal"}),       # expressive release (PMC 2013)
+    (("she kicked", "he kicked", "baby kicked", "felt a kick", "felt the baby", "baby moved"),
+     {"baby_connect": "conversation_with_baby"}), # celebrate the moment of connection
+    (("grateful", "thankful", "blessed", "content", "at peace"),
+     {"journaling": "gratitude_journal"}),       # positive-affect journaling
+    (("scared", "fear", "afraid", "birth fear", "worried about birth", "worried about baby"),
+     {"breathing": "safe_place", "journaling": "self_compassion"}),
+]
 
 # Day 1: Preferred activities mapping based on user mood input
 MOOD_TO_BREATHING = {

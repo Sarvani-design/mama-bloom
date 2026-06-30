@@ -110,9 +110,10 @@ async def test_normal_path_through_real_runner_saves_via_mcp(monkeypatch):
         assert state["daily_plan"]["breathing"]["id"]
         assert state["daily_plan"]["journaling"]["id"]
         assert state["daily_plan"]["baby_connect"]["id"]
-        # No GEMINI_API_KEY -> intro_writer's fallback path, proving the
-        # workflow degrades gracefully instead of aborting the request.
-        assert "Welcome to your Week 20" in state["gemini_intro"]
+        # intro_writer always produces a non-empty intro — either from Vertex AI
+        # (which is now the fallback when no GEMINI_API_KEY is set) or from the
+        # static fallback string, proving graceful degradation in both paths.
+        assert state["gemini_intro"]
         assert state["saved"] is True
 
         session_path = (

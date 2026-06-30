@@ -1,6 +1,7 @@
 # Day 4: Safety functions and routing logic - pure Python, no LLM calls
 
 import datetime
+import random
 import re
 
 from app.config import (
@@ -8,6 +9,8 @@ from app.config import (
     BREATHING_ACTIVITIES,
     CREATIVE_ALTERNATES,
     DISTRESS_KEYWORDS,
+    EVENING_WHISPERS,
+    FREE_TEXT_KEYWORD_OVERRIDES,
     JOURNALING_ACTIVITIES,
     MOOD_TO_BABY_CONNECT,
     MOOD_TO_BREATHING,
@@ -55,10 +58,23 @@ def get_trimester(week: int) -> int:
         return 3
 
 
+def _find_activity_by_id(act_id: str) -> dict:
+    """Look up a full activity dict by its id across all pools."""
+    all_acts = (
+        BREATHING_ACTIVITIES
+        + JOURNALING_ACTIVITIES
+        + BABY_CONNECT_ACTIVITIES
+        + CREATIVE_ALTERNATES
+        + [MUSIC_ACTIVITY]
+    )
+    return next((a for a in all_acts if a.get("id") == act_id), {})
+
+
 def get_daily_plan(
     week: int,
     mood: str | list,
     yesterday_activities: dict,
+    free_text: str = "",
 ) -> dict:
     # Day 1: Activity routing logic for ADK 2.0 agent
     # Accepts mood as single string or list for multi-select support
@@ -174,7 +190,7 @@ def get_daily_plan(
         else WEEKLY_MILESTONES[sorted_weeks[0]]
     )
 
-    return {
+    result = {
         "breathing": breathing,
         "journaling": journaling,
         "baby_connect": baby_connect,
@@ -183,25 +199,34 @@ def get_daily_plan(
         "primary_mood": primary_mood,
     }
 
-def get_morning_affirmation(week: int, session_count: int) -> str:
-    # Returns appropriate affirmation based on trimester
-    if week >= 28:
-        return "My body is wise and knows how to bring my baby into the world. I trust the process and breathe through each wave."
+    # Research-based free-text keyword override (config.FREE_TEXT_KEYWORD_OVERRIDES).
+    # Scans the mother's optional remarks for specific physical symptoms or emotional
+    # signals and swaps the relevant activity to the research-recommended choice.
+    # First matching keyword group wins; partial word match is intentional (e.g.,
+    # "frustrat" catches both "frustrated" and "frustrating").
+    if free_text:
+        ft_lower = free_text.lower()
+        for keywords, overrides in FREE_TEXT_KEYWORD_OVERRIDES:
+            if any(kw in ft_lower for kw in keywords):
+                for category, act_id in overrides.items():
+                    act = _find_activity_by_id(act_id)
+                    if act:
+                        result[category] = act
+                break
 
-    idx = session_count % len(MORNING_AFFIRMATIONS)
-    return MORNING_AFFIRMATIONS[idx]
+    return result
+
+def get_morning_affirmation(week: int, session_count: int = 0) -> str:
+    # Third-trimester mothers get a birth-preparation focused affirmation
+    if week >= 28:
+        t3_affirmations = [
+            "My body is wise and knows how to bring my baby into the world. I trust the process and breathe through each wave.",
+            "Millions of women before me have done this. My body holds that ancient knowing.",
+            "I am strong, I am ready, and my baby and I will do this together.",
+        ]
+        return random.choice(t3_affirmations)
+    return random.choice(MORNING_AFFIRMATIONS)
 
 
 def get_evening_whisper() -> str:
-    sentences = [
-        "Today I did my best, little one.",
-        "You are so loved already.",
-        "We made it through today together.",
-        "I am learning, and that is enough.",
-        "You are safe, and so am I.",
-        "Thank you for growing so beautifully.",
-        "Tomorrow we get to try again.",
-    ]
-    # Rotate by day of the week (0 = Monday, 6 = Sunday)
-    day_index = datetime.date.today().weekday()
-    return sentences[day_index]
+    return random.choice(EVENING_WHISPERS)
