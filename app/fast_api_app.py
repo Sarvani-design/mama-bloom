@@ -584,13 +584,40 @@ textarea { height: 80px; resize: none; }
     font-weight: 500;
 }
 .pref-chip .pref-emoji { margin-right: 6px; }
+/* ── Loading overlay ── */
+#loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: #F7F3EE;
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+.loading-spinner {
+    width: 44px;
+    height: 44px;
+    border: 3px solid #D4C9BB;
+    border-top-color: #4A7C6F;
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+    font-family: 'Lora', serif;
+    font-size: 18px;
+    color: #4A7C6F;
+    text-align: center;
+}
 """
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def base_page(content: str, title: str = "Mama Bloom") -> str:
+def base_page(content: str, title: str = "Mama Bloom", force_onboarding: bool = False) -> str:
     onboarding_js = """
 <script>
 (function() {
@@ -649,6 +676,12 @@ def base_page(content: str, title: str = "Mama Bloom") -> str:
 })();
 </script>
 """
+    # When the server detects a new browser session (no visitor cookie), clear
+    # any stale localStorage onboarding flag so the overlay always shows again.
+    _force_reset = (
+        "<script>localStorage.removeItem('mama_bloom_onboarded');</script>"
+        if force_onboarding else ""
+    )
     return (
         "<!DOCTYPE html>"
         "<html lang='en'>"
@@ -659,6 +692,7 @@ def base_page(content: str, title: str = "Mama Bloom") -> str:
         f"<style>{CSS}</style>"
         "</head>"
         "<body>"
+        f"{_force_reset}"
         # Onboarding overlay (hidden by default; JS shows on first visit)
         "<div id='onboarding' class='onboarding-overlay' style='display:none;'>"
         "<div class='onboarding-inner'>"
@@ -725,6 +759,11 @@ def base_page(content: str, title: str = "Mama Bloom") -> str:
         "</div>"
         "</div>"  # onboarding-inner
         "</div>"  # onboarding-overlay
+        # Loading overlay — shown by checkin form's onsubmit handler
+        "<div id='loading-overlay'>"
+        "<div class='loading-spinner'></div>"
+        "<div class='loading-text'>Preparing your plan for you…</div>"
+        "</div>"
         # Main page content
         "<div class='container'>"
         f"{content}"
@@ -838,13 +877,17 @@ function markCheckin(actId, feeling) {
 # ---------------------------------------------------------------------------
 
 @app.get("/", response_class=HTMLResponse)
-async def home():
+async def home(request: Request):
+    visitor_id = _get_visitor_id(request)
+    is_new_visitor = _VISITOR_COOKIE not in request.cookies
     nb = nav_bar("home")
     content = (
         f"{nb}"
         "<h1>Hello, <span id='greeting-name'>mama.</span></h1>"
         "<p class='subtitle'>25 minutes a day, just for you and your baby.</p>"
-        "<form method='POST' action='/checkin' id='checkin-form'>"
+        "<form method='POST' action='/checkin' id='checkin-form' "
+        "onsubmit=\"document.getElementById('loading-overlay').style.display='flex';"
+        "this.querySelector('button[type=submit]').disabled=true;\">"
         "<label class='label'>Which week are you in?</label>"
         "<input type='number' id='week-input' name='week' "
         "min='1' max='42' placeholder='e.g. 22' required>"
@@ -889,7 +932,9 @@ async def home():
         "}"
         "</script>"
     )
-    return HTMLResponse(base_page(content))
+    return _with_visitor_cookie(
+        HTMLResponse(base_page(content, force_onboarding=is_new_visitor)), visitor_id
+    )
 
 
 @app.post("/checkin", response_class=HTMLResponse)
@@ -946,8 +991,8 @@ async def checkin(
             "</div>"
             "<p style='margin-bottom:20px;'>If you are in immediate danger, "
             "please call emergency services or go to your nearest hospital.</p>"
-            "<a href='/'>"
-            "<button class='btn-outline'>Return to home</button></a>"
+            "<button type='button' class='btn-outline' "
+            "onclick=\"window.location='/'\">Return to home</button>"
         )
         return _with_visitor_cookie(
             HTMLResponse(base_page(content, "Mama Bloom — We See You")), visitor_id
@@ -1063,9 +1108,8 @@ async def write_page(
         f"<textarea class='write-area' name='content' "
         f"placeholder='{placeholder}'></textarea>"
         "<button type='submit' class='btn'>Save to Baby Book 💌</button>"
-        "<a href='/'>"
-        "<button type='button' class='btn-outline'>Skip for today</button>"
-        "</a>"
+        "<button type='button' class='btn-outline' "
+        "onclick=\"window.location='/'\">Skip for today</button>"
         "</form>"
     )
     return HTMLResponse(base_page(content, title_text))
@@ -1117,12 +1161,10 @@ async def save_entry(
         f"font-size:14px;color:#2C3E35;margin-top:6px;line-height:1.65;'>"
         f"{html.escape(preview)}</p>"
         "</div>"
-        "<a href='/babybook'>"
-        "<button class='btn' style='margin-top:8px;'>See your Baby Book 💌</button>"
-        "</a>"
-        "<a href='/'>"
-        "<button class='btn-outline'>Continue with today</button>"
-        "</a>"
+        "<button type='button' class='btn' style='margin-top:8px;' "
+        "onclick=\"window.location='/babybook'\">See your Baby Book 💌</button>"
+        "<button type='button' class='btn-outline' "
+        "onclick=\"window.location='/'\">Continue with today</button>"
     )
     return _with_visitor_cookie(
         HTMLResponse(base_page(page_content, "Saved to Baby Book")), visitor_id
