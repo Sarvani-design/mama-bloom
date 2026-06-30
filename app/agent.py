@@ -179,31 +179,36 @@ def intro_writer(
     # guarantee while still running entirely inside the real graph.
     gemini_intro = ""
     api_key = os.environ.get("GEMINI_API_KEY", "")
-    if api_key:
-        try:
+    project = os.environ.get("GOOGLE_CLOUD_PROJECT", "mama-bloom-500505")
+    location = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
+    try:
+        if api_key and not api_key.startswith("AQ."):
             client = genai.Client(api_key=api_key)
-            user_prompt = (
-                f"The mother is in week {week} of her pregnancy. "
-                f"Her emotional state today: {mood_context}. "
-                f"Write ONE warm personalised introduction of maximum "
-                f"80 words that acknowledges her week and how she is "
-                f"feeling, then gently introduces today's three "
-                f"activities: {breathing_name}, {journaling_name}, "
-                f"and {baby_connect_name}. Be gentle, encouraging, "
-                f"and non-medical."
-            )
-            response = client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=user_prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=_SYSTEM_PROMPT,
-                    max_output_tokens=150,
-                    temperature=0.8,
-                ),
-            )
-            gemini_intro = response.text.strip() if response.text else ""
-        except Exception as exc:
-            print(f"Gemini call failed, using fallback intro: {exc}")
+        else:
+            client = genai.Client(vertexai=True, project=project, location=location)
+        user_prompt = (
+            f"The mother is in week {week} of her pregnancy. "
+            f"Her emotional state today: {mood_context}. "
+            f"Write ONE warm personalised introduction of maximum "
+            f"80 words that acknowledges her week and how she is "
+            f"feeling, then gently introduces today's three "
+            f"activities: {breathing_name}, {journaling_name}, "
+            f"and {baby_connect_name}. Be gentle, encouraging, "
+            f"and non-medical."
+        )
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=_SYSTEM_PROMPT,
+                max_output_tokens=300,
+                temperature=0.8,
+                thinking_config=types.ThinkingConfig(thinking_budget=0),
+            ),
+        )
+        gemini_intro = response.text.strip() if response.text else ""
+    except Exception as exc:
+        print(f"Gemini call failed, using fallback intro: {exc}")
 
     if not gemini_intro:
         gemini_intro = (

@@ -158,3 +158,5 @@ The result is a submission where every architectural claim — the workflow
 graph, the MCP server, the safety guardrail's structural enforcement — is
 mechanically verifiable by reading the code and running
 `pytest tests/unit tests/integration`, not just asserted in prose.
+
+
