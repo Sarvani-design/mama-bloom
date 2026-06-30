@@ -110,39 +110,90 @@ DISCLAIMER = (
 # CSS — single source of truth
 # ---------------------------------------------------------------------------
 CSS = """
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    background: #F7F3EE;
+    background: linear-gradient(160deg, #E8F2ED 0%, #F5F0E8 45%, #F0E8EE 100%);
     font-family: 'Inter', sans-serif;
     color: #2C3E35;
     min-height: 100vh;
     padding: 0 0 48px 0;
+    position: relative;
+    overflow-x: hidden;
 }
 
-.container { max-width: 480px; margin: 0 auto; padding: 24px 20px; }
+/* ── Animated background orbs ── */
+.orb {
+    position: fixed; border-radius: 50%; filter: blur(65px);
+    pointer-events: none; z-index: 0;
+}
+.orb-1 {
+    width: 360px; height: 360px; opacity: 0.5;
+    background: radial-gradient(circle, #A8D5C2 0%, transparent 70%);
+    top: -100px; right: -100px;
+    animation: orb-drift 14s ease-in-out infinite;
+}
+.orb-2 {
+    width: 300px; height: 300px; opacity: 0.42;
+    background: radial-gradient(circle, #E8C4B8 0%, transparent 70%);
+    bottom: 15%; left: -80px;
+    animation: orb-drift 18s ease-in-out infinite reverse;
+}
+.orb-3 {
+    width: 240px; height: 240px; opacity: 0.35;
+    background: radial-gradient(circle, #C5D9F0 0%, transparent 70%);
+    top: 45%; right: -60px;
+    animation: orb-drift 11s ease-in-out infinite 5s;
+}
+@keyframes orb-drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33%       { transform: translate(-22px, 18px) scale(1.06); }
+    66%       { transform: translate(12px, -18px) scale(0.96); }
+}
+
+.container { max-width: 480px; margin: 0 auto; padding: 24px 20px; position: relative; z-index: 1; }
 
 /* ── Typography ── */
 h1 {
     font-family: 'Lora', serif;
-    font-size: 30px;
-    font-weight: 500;
-    color: #2C3E35;
+    font-size: 38px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #2C6B55 0%, #4A7C6F 45%, #6B9E8F 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin-bottom: 6px;
-    line-height: 1.25;
+    line-height: 1.2;
+    animation: title-float 4s ease-in-out infinite;
+}
+@keyframes title-float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-4px); }
 }
 h2 {
     font-family: 'Lora', serif;
-    font-size: 20px;
-    font-weight: 500;
+    font-size: 22px;
+    font-weight: 600;
     color: #2C3E35;
     margin-bottom: 8px;
 }
-h3 { font-size: 14px; font-weight: 600; color: #4A7C6F; margin-bottom: 12px; }
-p { line-height: 1.65; color: #5C6B64; font-size: 15px; }
-.subtitle { font-size: 15px; color: #8A9B94; margin-bottom: 28px; }
+h3 { font-size: 14px; font-weight: 700; color: #4A7C6F; margin-bottom: 12px; }
+p { line-height: 1.7; color: #5C6B64; font-size: 15px; font-weight: 300; }
+.subtitle { font-size: 15px; color: #8A9B94; margin-bottom: 28px; font-weight: 300; }
+
+/* ── Section header (replaces plain h3 for "Today's plan") ── */
+.section-header {
+    font-size: 11px; font-weight: 700; color: #2C3E35;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin: 8px 0 18px; display: flex; align-items: center; gap: 8px;
+}
+.section-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, #4A7C6F, #7AB5A8);
+    display: inline-block;
+}
 
 /* ── Form elements ── */
 .label {
@@ -179,46 +230,59 @@ textarea { height: 80px; resize: none; }
     margin-top: 4px;
 }
 .mood-chip {
-    background: white;
-    border: 1.5px solid #D4C9BB;
-    border-radius: 20px;
-    padding: 12px 6px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 11px;
-    color: #5C6B64;
-    user-select: none;
+    background: rgba(255,255,255,0.70);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(212,201,187,0.50);
+    border-radius: 22px; padding: 16px 8px;
+    text-align: center; cursor: pointer;
+    transition: all 0.28s cubic-bezier(0.34,1.56,0.64,1);
+    font-size: 12px; color: #5C6B64; user-select: none;
+    box-shadow: 0 2px 12px rgba(44,62,53,0.06);
 }
-.mood-chip:hover { border-color: #4A7C6F; background: #F0F7F4; transform: translateY(-1px); }
+.mood-chip:hover {
+    border-color: rgba(74,124,111,0.55);
+    background: rgba(240,247,244,0.85);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(74,124,111,0.16);
+}
 .mood-chip.selected {
+    background: linear-gradient(145deg, rgba(232,244,239,0.95), rgba(200,232,218,0.92));
     border-color: #4A7C6F;
-    background: #E8F4EF;
-    color: #2C3E35;
-    font-weight: 600;
-    transform: scale(1.04);
-    box-shadow: 0 2px 8px rgba(74,124,111,0.18);
+    color: #1E3A2F; font-weight: 700;
+    transform: scale(1.07) translateY(-3px);
+    box-shadow: 0 10px 28px rgba(74,124,111,0.28);
 }
-.mood-chip .emoji { font-size: 22px; display: block; margin-bottom: 4px; }
+.mood-chip .emoji {
+    font-size: 28px; display: block; margin-bottom: 6px;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.mood-chip.selected .emoji { transform: scale(1.25) rotate(-5deg); }
 
 /* ── Buttons ── */
 .btn {
-    width: 100%;
-    padding: 14px;
-    background: #4A7C6F;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 16px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
-    cursor: pointer;
-    margin-top: 24px;
-    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-    box-shadow: 0 2px 10px rgba(74,124,111,0.22);
+    width: 100%; padding: 16px;
+    background: linear-gradient(135deg, #5A9E8F 0%, #3A7060 55%, #2E5E50 100%);
+    color: white; border: none; border-radius: 14px;
+    font-size: 16px; font-family: 'Inter', sans-serif;
+    font-weight: 600; cursor: pointer; margin-top: 24px;
+    box-shadow: 0 4px 20px rgba(58,112,96,0.38), 0 1px 0 rgba(255,255,255,0.15) inset;
+    transition: all 0.25s;
+    position: relative; overflow: hidden;
 }
-.btn:hover { background: #3A6C5F; box-shadow: 0 4px 18px rgba(74,124,111,0.30); }
-.btn:active { transform: scale(0.97); }
+.btn::after {
+    content: ''; position: absolute;
+    top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.20), transparent);
+    animation: shimmer 3s ease infinite;
+}
+@keyframes shimmer { 0% { left: -100%; } 100% { left: 160%; } }
+.btn:hover {
+    background: linear-gradient(135deg, #6BB0A1 0%, #4A8272 55%, #3A6E5F 100%);
+    box-shadow: 0 6px 28px rgba(58,112,96,0.48);
+    transform: translateY(-1px);
+}
+.btn:active { transform: scale(0.97) translateY(0); }
 .btn-outline {
     width: 100%;
     padding: 12px;
@@ -264,56 +328,80 @@ textarea { height: 80px; resize: none; }
 }
 .btn-sm:hover { background: #3A6C5F; }
 
-/* ── Cards ── */
+/* ── Cards — glassmorphism ── */
 .card {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    border: 1px solid #EDE7DF;
-    box-shadow: 0 2px 16px rgba(44,62,53,0.06);
-    transition: box-shadow 0.2s;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.55);
+    border-radius: 20px; padding: 22px; margin-bottom: 18px;
+    box-shadow: 0 8px 32px rgba(44,62,53,0.10), 0 1px 0 rgba(255,255,255,0.8) inset;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
-.card:hover { box-shadow: 0 4px 24px rgba(44,62,53,0.10); }
+.card:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(44,62,53,0.14); }
 .card-green {
-    background: #EDF4F0;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    border: 1px solid #C0D8CC;
-    box-shadow: 0 2px 14px rgba(74,124,111,0.08);
+    background: linear-gradient(135deg, rgba(232,244,239,0.92) 0%, rgba(205,235,222,0.88) 100%);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(192,216,204,0.65);
+    border-radius: 20px; padding: 22px; margin-bottom: 18px;
+    box-shadow: 0 6px 28px rgba(74,124,111,0.13);
 }
 .card-dark {
-    background: #2C3E35;
-    border-radius: 16px;
-    padding: 22px;
-    margin-bottom: 16px;
-    box-shadow: 0 4px 20px rgba(44,62,53,0.18);
+    background: linear-gradient(135deg, #2C3E35 0%, #1A2E22 100%);
+    border-radius: 20px; padding: 24px; margin-bottom: 18px;
+    box-shadow: 0 10px 36px rgba(26,46,34,0.38);
 }
 .card-rose {
-    background: #FDF0EC;
-    border-radius: 16px;
-    padding: 18px 20px;
-    margin-bottom: 16px;
-    border: 1px solid #E8C4B8;
-    box-shadow: 0 2px 12px rgba(184,92,82,0.07);
+    background: linear-gradient(135deg, rgba(253,240,236,0.92) 0%, rgba(248,218,206,0.88) 100%);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(232,196,184,0.65);
+    border-radius: 20px; padding: 20px; margin-bottom: 18px;
+    box-shadow: 0 6px 24px rgba(184,92,82,0.11);
 }
 
-/* ── Activity cards ── */
-.activity-card {
-    background: white;
-    border-radius: 16px;
-    padding: 20px 20px 20px 20px;
-    margin-bottom: 16px;
-    border: 1px solid #EDE7DF;
-    border-left: 3px solid #D4C9BB;
-    box-shadow: 0 2px 14px rgba(44,62,53,0.06);
-    transition: box-shadow 0.2s;
+/* ── Result hero banner ── */
+.result-hero {
+    background: linear-gradient(135deg, #2E5E50 0%, #3A7060 45%, #5A9E8F 100%);
+    border-radius: 22px; padding: 30px 24px; margin-bottom: 20px;
+    text-align: center; position: relative; overflow: hidden;
+    box-shadow: 0 10px 36px rgba(46,94,80,0.38);
 }
-.activity-card:hover { box-shadow: 0 4px 20px rgba(44,62,53,0.10); }
-.act-breathing { border-left-color: #4A7C6F; }
-.act-journaling { border-left-color: #C4975A; }
-.act-baby { border-left-color: #B85C52; }
+.result-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at top right, rgba(255,255,255,0.18) 0%, transparent 55%);
+}
+.result-hero-week {
+    font-family: 'Lora', serif; font-size: 34px; font-weight: 600;
+    color: white; position: relative; line-height: 1.15;
+}
+.result-hero-sub {
+    font-size: 13px; color: rgba(255,255,255,0.78);
+    margin-top: 5px; position: relative; font-weight: 400;
+}
+.result-hero-badge {
+    display: inline-block; margin-top: 12px; position: relative;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.32);
+    backdrop-filter: blur(8px);
+    border-radius: 99px; padding: 5px 16px;
+    font-size: 12px; font-weight: 600; color: white;
+}
+
+/* ── Activity cards — gradient top stripe + glass ── */
+.activity-card {
+    background: rgba(255,255,255,0.78);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.52);
+    border-radius: 20px; padding: 0; margin-bottom: 18px;
+    overflow: hidden;
+    box-shadow: 0 6px 24px rgba(44,62,53,0.09);
+    transition: transform 0.22s, box-shadow 0.22s;
+}
+.activity-card:hover { transform: translateY(-3px); box-shadow: 0 12px 36px rgba(44,62,53,0.14); }
+.activity-top-stripe { height: 5px; }
+.act-breathing .activity-top-stripe { background: linear-gradient(90deg, #4A7C6F, #7AB5A8); }
+.act-journaling .activity-top-stripe { background: linear-gradient(90deg, #C4975A, #E0B87A); }
+.act-baby .activity-top-stripe { background: linear-gradient(90deg, #B85C52, #D98278); }
+.activity-inner { padding: 18px 20px 20px; }
 .activity-name {
     font-family: 'Lora', serif;
     font-size: 18px;
@@ -422,18 +510,26 @@ textarea { height: 80px; resize: none; }
 
 /* ── Streak bar ── */
 .streak {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-    padding: 14px;
-    background: #EDF4F0;
-    border-radius: 12px;
-    margin-bottom: 14px;
-    border: 1px solid #C0D8CC;
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    padding: 18px; border-radius: 20px; margin-bottom: 18px;
+    background: linear-gradient(135deg, rgba(232,244,239,0.85), rgba(208,232,220,0.82));
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(192,216,204,0.55);
+    box-shadow: 0 4px 20px rgba(74,124,111,0.10);
 }
-.streak-item { text-align: center; font-size: 11px; color: #5C6B64; }
-.streak-item span { display: block; font-size: 22px; font-weight: 600; color: #2C3E35; line-height: 1.2; }
+.streak-item {
+    text-align: center; font-size: 10px; color: #5C6B64;
+    background: rgba(255,255,255,0.72); border-radius: 14px;
+    padding: 10px 14px; min-width: 60px;
+    box-shadow: 0 2px 8px rgba(74,124,111,0.08);
+    backdrop-filter: blur(8px);
+}
+.streak-item span {
+    display: block; font-size: 24px; font-weight: 700; line-height: 1.2;
+    background: linear-gradient(135deg, #2C6B55, #4A7C6F);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
 
 /* ── Disclaimer ── */
 .disclaimer {
@@ -626,7 +722,7 @@ textarea { height: 80px; resize: none; }
 #loading-overlay {
     position: fixed;
     inset: 0;
-    background: #F7F3EE;
+    background: linear-gradient(160deg, #E8F2ED 0%, #F5F0E8 45%, #F0E8EE 100%);
     z-index: 2000;
     display: none;
     flex-direction: column;
@@ -801,6 +897,10 @@ def base_page(content: str, title: str = "Mama Bloom", force_onboarding: bool = 
         "<div class='loading-spinner'></div>"
         "<div class='loading-text'>Preparing your plan for you…</div>"
         "</div>"
+        # Floating background orbs (CSS-animated, pointer-events:none)
+        "<div class='orb orb-1'></div>"
+        "<div class='orb orb-2'></div>"
+        "<div class='orb orb-3'></div>"
         # Main page content
         "<div class='container'>"
         f"{content}"
@@ -884,6 +984,8 @@ def activity_card(act: dict, pillar: str, week: int) -> str:
     accent_cls = accent_map.get(pillar, "")
     return (
         f"<div class='activity-card {accent_cls}'>"
+        "<div class='activity-top-stripe'></div>"
+        "<div class='activity-inner'>"
         f"<span class='pill {pill_cls}'>{pill_label}</span>"
         f"<div class='activity-name'>{name}</div>"
         f"<div class='activity-why'>"
@@ -892,6 +994,7 @@ def activity_card(act: dict, pillar: str, week: int) -> str:
         f"<div class='activity-prompt'>{prompt}</div>"
         f"{write_btn}"
         f"{checkin_html}"
+        "</div>"
         "</div>"
     )
 
@@ -1082,18 +1185,11 @@ async def checkin(
 
     content = (
         f"{nb}"
-        # Session overview — mood + week summary at the top
-        "<div class='card fade-in-1' style='display:flex;align-items:center;gap:12px;'>"
-        "<div style='flex:1;'>"
-        f"<div style='font-size:20px;font-weight:600;color:#2C3E35;font-family:Lora,serif;'>"
-        f"Week {week}</div>"
-        f"<div style='font-size:13px;color:#8A9B94;margin-top:2px;'>"
-        f"Feeling: {mood_display}</div>"
-        "</div>"
-        "<div style='text-align:right;'>"
-        "<div style='font-size:12px;color:#4A7C6F;font-weight:500;'>25 min plan ready</div>"
-        f"<div style='font-size:11px;color:#B4A99A;margin-top:2px;'>{current_streak} day streak</div>"
-        "</div>"
+        # Result hero — deep green gradient banner
+        "<div class='result-hero fade-in-1'>"
+        f"<div class='result-hero-week'>Week {week}</div>"
+        f"<div class='result-hero-sub'>Feeling: {mood_display} &nbsp;·&nbsp; {current_streak} day streak</div>"
+        "<div class='result-hero-badge'>✨ 25 min plan ready</div>"
         "</div>"
         # Morning affirmation — full-width, serene
         "<div class='card-green fade-in-2'>"
@@ -1103,7 +1199,10 @@ async def checkin(
         f"{intro_html}"
         f"{milestone_html}"
         # Activity cards
-        "<h3>Today's plan — 25 minutes, all for you</h3>"
+        "<div class='section-header'>"
+        "<span class='section-dot'></span>"
+        "Today's plan — 25 minutes, all for you"
+        "</div>"
         f"{b_card}{j_card}{bc_card}"
         # Streak
         "<div class='streak'>"
