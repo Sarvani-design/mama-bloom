@@ -135,6 +135,28 @@ Mother input (week, mood, description)
 
 ---
 
+## MCP Architecture
+
+The MCP client/server split is a real stdio subprocess boundary — not in-process function calls:
+
+```
+fast_api_app.py              app/mcp_client.py              app/mcp_server.py
+      │                             │                               │
+      │  await save_session(...)    │   ClientSession.call_tool()   │  @mcp.tool
+      │ ───────────────────────────>│ ─────────── stdio ───────────>│  save_session()
+      │                             │      (MCP protocol)           │       │
+      │                             │ <─────────── stdio ───────────│       ▼
+      │  returns streak dict        │   CallToolResult.content       │  data/sessions/
+      │ <───────────────────────────│                               │  *.json
+```
+
+`mcp_client.py` spawns `mcp_server.py` as a subprocess and communicates over
+the MCP wire protocol (JSON-RPC over stdio). The two processes have separate
+memory spaces — `memory_saver` cannot call `mcp_server.py`'s Python functions
+directly; all reads and writes cross the protocol boundary.
+
+---
+
 ## Course Concepts Demonstrated
 
 | Day | Concept | Implementation |

@@ -157,15 +157,18 @@ input[type=number], textarea {
     width: 100%;
     padding: 12px 14px;
     border: 1.5px solid #D4C9BB;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 15px;
     font-family: 'Inter', sans-serif;
     background: white;
     color: #2C3E35;
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
-input[type=number]:focus, textarea:focus { border-color: #4A7C6F; }
+input[type=number]:focus, textarea:focus {
+    border-color: #4A7C6F;
+    box-shadow: 0 0 0 3px rgba(74,124,111,0.12);
+}
 textarea { height: 80px; resize: none; }
 
 /* ── Mood chips ── */
@@ -178,21 +181,23 @@ textarea { height: 80px; resize: none; }
 .mood-chip {
     background: white;
     border: 1.5px solid #D4C9BB;
-    border-radius: 10px;
-    padding: 10px 6px;
+    border-radius: 20px;
+    padding: 12px 6px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.2s;
     font-size: 11px;
     color: #5C6B64;
     user-select: none;
 }
-.mood-chip:hover { border-color: #4A7C6F; background: #F0F7F4; }
+.mood-chip:hover { border-color: #4A7C6F; background: #F0F7F4; transform: translateY(-1px); }
 .mood-chip.selected {
     border-color: #4A7C6F;
-    background: #EDF4F0;
+    background: #E8F4EF;
     color: #2C3E35;
-    font-weight: 500;
+    font-weight: 600;
+    transform: scale(1.04);
+    box-shadow: 0 2px 8px rgba(74,124,111,0.18);
 }
 .mood-chip .emoji { font-size: 22px; display: block; margin-bottom: 4px; }
 
@@ -203,15 +208,17 @@ textarea { height: 80px; resize: none; }
     background: #4A7C6F;
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 16px;
     font-family: 'Inter', sans-serif;
     font-weight: 500;
     cursor: pointer;
     margin-top: 24px;
-    transition: background 0.2s;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    box-shadow: 0 2px 10px rgba(74,124,111,0.22);
 }
-.btn:hover { background: #3A6C5F; }
+.btn:hover { background: #3A6C5F; box-shadow: 0 4px 18px rgba(74,124,111,0.30); }
+.btn:active { transform: scale(0.97); }
 .btn-outline {
     width: 100%;
     padding: 12px;
@@ -260,40 +267,53 @@ textarea { height: 80px; resize: none; }
 /* ── Cards ── */
 .card {
     background: white;
-    border-radius: 14px;
+    border-radius: 16px;
     padding: 20px;
-    margin-bottom: 14px;
-    border: 1px solid #E8E0D8;
+    margin-bottom: 16px;
+    border: 1px solid #EDE7DF;
+    box-shadow: 0 2px 16px rgba(44,62,53,0.06);
+    transition: box-shadow 0.2s;
 }
+.card:hover { box-shadow: 0 4px 24px rgba(44,62,53,0.10); }
 .card-green {
     background: #EDF4F0;
-    border-radius: 14px;
-    padding: 16px 20px;
-    margin-bottom: 14px;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
     border: 1px solid #C0D8CC;
+    box-shadow: 0 2px 14px rgba(74,124,111,0.08);
 }
 .card-dark {
     background: #2C3E35;
-    border-radius: 14px;
-    padding: 20px;
-    margin-bottom: 14px;
+    border-radius: 16px;
+    padding: 22px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 20px rgba(44,62,53,0.18);
 }
 .card-rose {
     background: #FDF0EC;
-    border-radius: 14px;
-    padding: 16px 20px;
-    margin-bottom: 14px;
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
     border: 1px solid #E8C4B8;
+    box-shadow: 0 2px 12px rgba(184,92,82,0.07);
 }
 
 /* ── Activity cards ── */
 .activity-card {
     background: white;
-    border-radius: 14px;
-    padding: 20px;
-    margin-bottom: 14px;
-    border: 1px solid #E8E0D8;
+    border-radius: 16px;
+    padding: 20px 20px 20px 20px;
+    margin-bottom: 16px;
+    border: 1px solid #EDE7DF;
+    border-left: 3px solid #D4C9BB;
+    box-shadow: 0 2px 14px rgba(44,62,53,0.06);
+    transition: box-shadow 0.2s;
 }
+.activity-card:hover { box-shadow: 0 4px 20px rgba(44,62,53,0.10); }
+.act-breathing { border-left-color: #4A7C6F; }
+.act-journaling { border-left-color: #C4975A; }
+.act-baby { border-left-color: #B85C52; }
 .activity-name {
     font-family: 'Lora', serif;
     font-size: 18px;
@@ -357,13 +377,25 @@ textarea { height: 80px; resize: none; }
 /* ── Affirmation ── */
 .affirmation {
     font-family: 'Lora', serif;
-    font-size: 21px;
+    font-size: 23px;
     font-style: italic;
     color: #2C3E35;
-    line-height: 1.55;
+    line-height: 1.65;
     text-align: center;
-    padding: 4px;
+    padding: 12px 4px;
 }
+
+/* ── Staggered fade-in for result page cards ── */
+@keyframes fade-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0);    }
+}
+.fade-in-1 { animation: fade-up 0.4s ease both; }
+.fade-in-2 { animation: fade-up 0.4s ease 0.07s both; }
+.fade-in-3 { animation: fade-up 0.4s ease 0.14s both; }
+.fade-in-4 { animation: fade-up 0.4s ease 0.21s both; }
+.fade-in-5 { animation: fade-up 0.4s ease 0.28s both; }
+.fade-in-6 { animation: fade-up 0.4s ease 0.35s both; }
 
 /* ── Pills ── */
 .label-small {
@@ -430,16 +462,23 @@ textarea { height: 80px; resize: none; }
     font-family: 'Lora', serif;
 }
 
+/* ── Slim scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #F7F3EE; }
+::-webkit-scrollbar-thumb { background: #C8BDB3; border-radius: 99px; }
+
 /* ── Nav ── */
 .nav {
     display: flex;
     justify-content: space-around;
-    background: white;
-    border-radius: 14px;
+    background: rgba(247,243,238,0.94);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
     padding: 12px 8px;
     margin-bottom: 24px;
-    border: 1px solid #E8E0D8;
-    box-shadow: 0 1px 4px rgba(44,62,53,0.06);
+    border: 1px solid #EDE7DF;
+    box-shadow: 0 2px 12px rgba(44,62,53,0.07);
 }
 .nav a {
     text-decoration: none;
@@ -471,7 +510,10 @@ textarea { height: 80px; resize: none; }
     resize: vertical;
     outline: none;
 }
-.write-area:focus { border-color: #4A7C6F; }
+.write-area:focus {
+    border-color: #4A7C6F;
+    box-shadow: 0 0 0 3px rgba(74,124,111,0.12);
+}
 
 /* ── Baby book ── */
 .confirm-circle {
@@ -838,8 +880,10 @@ def activity_card(act: dict, pillar: str, week: int) -> str:
         f"<div class='checkin-done' id='{done_id}'>Noted — thank you 💚</div>"
     )
 
+    accent_map = {"breathing": "act-breathing", "journaling": "act-journaling", "baby_connect": "act-baby"}
+    accent_cls = accent_map.get(pillar, "")
     return (
-        "<div class='activity-card'>"
+        f"<div class='activity-card {accent_cls}'>"
         f"<span class='pill {pill_cls}'>{pill_label}</span>"
         f"<div class='activity-name'>{name}</div>"
         f"<div class='activity-why'>"
@@ -1018,7 +1062,7 @@ async def checkin(
     milestone_html = ""
     if milestone:
         milestone_html = (
-            "<div class='card-rose'>"
+            "<div class='card-rose fade-in-4'>"
             f"<div class='label-small'>Week {week} — your baby right now</div>"
             f"<p style='color:#2C3E35;font-size:14px;margin-top:4px;'>{milestone}</p>"
             "</div>"
@@ -1030,7 +1074,7 @@ async def checkin(
     intro_html = ""
     if intro:
         intro_html = (
-            "<div class='card'>"
+            "<div class='card fade-in-3'>"
             f"<p style='font-style:italic;color:#5C6B64;font-size:14px;"
             f"font-family:Lora,serif;'>{html.escape(intro)}</p>"
             "</div>"
@@ -1039,8 +1083,7 @@ async def checkin(
     content = (
         f"{nb}"
         # Session overview — mood + week summary at the top
-        "<div style='background:white;border-radius:14px;border:1px solid #E8E0D8;"
-        "padding:16px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;'>"
+        "<div class='card fade-in-1' style='display:flex;align-items:center;gap:12px;'>"
         "<div style='flex:1;'>"
         f"<div style='font-size:20px;font-weight:600;color:#2C3E35;font-family:Lora,serif;'>"
         f"Week {week}</div>"
@@ -1053,7 +1096,7 @@ async def checkin(
         "</div>"
         "</div>"
         # Morning affirmation — full-width, serene
-        "<div class='card-green'>"
+        "<div class='card-green fade-in-2'>"
         "<div class='label-small'>Read this slowly</div>"
         f"<div class='affirmation'>\"{html.escape(affirmation)}\"</div>"
         "</div>"

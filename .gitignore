@@ -206,3 +206,7 @@ tools/a2a-inspector/
 # Mama Bloom user data (privacy — never commit check-in/baby-book content)
 data/sessions/
 data/baby_book/
+
+# Mama Bloom eval artifacts (generated — re-run agents-cli eval to reproduce)
+artifacts/traces/
+artifacts/grade_results/
