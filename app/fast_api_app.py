@@ -797,15 +797,13 @@ def base_page(content: str, title: str = "Mama Bloom", force_onboarding: bool = 
     el.classList.toggle('selected');
   };
 
-  // Pre-fill week from localStorage on page load
+  // Pre-fill week and name — script is at end of body so DOM is already ready
   var savedWeek = localStorage.getItem('mama_bloom_week');
   var savedName = localStorage.getItem('mama_bloom_name');
-  window.addEventListener('DOMContentLoaded', function() {
-    var wk = document.getElementById('week-input');
-    if (wk && savedWeek) wk.value = savedWeek;
-    var gr = document.getElementById('greeting-name');
-    if (gr && savedName) gr.textContent = savedName + '.';
-  });
+  var wk = document.getElementById('week-input');
+  if (wk && savedWeek) wk.value = savedWeek;
+  var gr = document.getElementById('greeting-name');
+  if (gr && savedName) gr.textContent = savedName + '.';
 })();
 </script>
 """
@@ -950,8 +948,7 @@ def activity_card(act: dict, pillar: str, week: int) -> str:
     prompt   = act.get("prompt", "")
     act_id   = act.get("id", str(uuid.uuid4())[:8])
 
-    # Science note trimmed to ≤120 chars for the why-box
-    science_short = science[:120] + ("…" if len(science) > 120 else "")
+    science_short = science
 
     write_btn = ""
     if pillar == "journaling":
