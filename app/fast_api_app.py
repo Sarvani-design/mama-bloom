@@ -645,6 +645,253 @@ textarea { height: 80px; resize: none; }
     margin-bottom: 20px;
 }
 
+/* ── Responsive container + activity grid ── */
+@media (min-width: 880px) {
+    .container { max-width: 860px; }
+    .activities-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+    }
+    .activities-grid > * { margin-bottom: 0; }
+}
+@media (min-width: 600px) and (max-width: 879px) {
+    .container { max-width: 600px; }
+    .activities-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    .activities-grid > * { margin-bottom: 0; }
+}
+
+/* ── Calendar ── */
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 24px;
+}
+.cal-header {
+    text-align: center; font-size: 9px; color: #8A9B94;
+    padding: 4px 2px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+}
+.cal-day {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2px; cursor: default;
+    font-size: 10px; color: #5C6B64;
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(212,201,187,0.35);
+    transition: transform 0.18s, box-shadow 0.18s;
+    position: relative;
+}
+.cal-day.has-entry {
+    cursor: pointer;
+    background: rgba(255,255,255,0.80);
+    border-color: rgba(74,124,111,0.25);
+}
+.cal-day.has-entry:hover { transform: scale(1.08); box-shadow: 0 6px 18px rgba(44,62,53,0.14); }
+.cal-day.today {
+    border: 2px solid #4A7C6F;
+    background: rgba(232,244,239,0.85);
+}
+.cal-day-num { font-size: 11px; font-weight: 600; color: #2C3E35; line-height: 1; }
+.cal-day.today .cal-day-num { color: #4A7C6F; }
+.cal-day-emoji { font-size: 15px; line-height: 1; }
+.cal-legend {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 18px; font-size: 11px; color: #5C6B64;
+    align-items: center;
+}
+.cal-legend-item { display: flex; align-items: center; gap: 4px; }
+
+/* Calendar detail modal */
+.cal-modal-bg {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: rgba(26,46,34,0.45);
+    backdrop-filter: blur(6px);
+    align-items: center; justify-content: center;
+}
+.cal-modal-bg.open { display: flex; }
+.cal-modal {
+    background: rgba(255,255,255,0.97);
+    border-radius: 22px; padding: 28px 24px;
+    max-width: 340px; width: 90%;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(26,46,34,0.28);
+    animation: modal-in 0.22s ease;
+}
+@keyframes modal-in {
+    from { transform: scale(0.90) translateY(12px); opacity: 0; }
+    to   { transform: scale(1)    translateY(0);    opacity: 1; }
+}
+.cal-modal-close {
+    position: absolute; top: 14px; right: 16px;
+    background: none; border: none;
+    font-size: 22px; cursor: pointer; color: #8A9B94; line-height: 1;
+}
+.cal-modal-date { font-size: 11px; color: #8A9B94; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.cal-modal-emoji { font-size: 48px; text-align: center; margin: 10px 0; }
+.cal-modal-mood { font-family: 'Lora', serif; font-size: 20px; color: #2C3E35; text-align: center; font-weight: 600; margin-bottom: 14px; text-transform: capitalize; }
+.cal-modal-week { font-size: 12px; color: #8A9B94; text-align: center; margin-bottom: 14px; }
+.cal-modal-acts { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.cal-modal-act { background: rgba(74,124,111,0.12); border-radius: 99px; padding: 4px 12px; font-size: 11px; color: #3A7060; }
+
+/* ── Animated book UI ── */
+.book-scene {
+    width: 100%; max-width: 720px; margin: 0 auto;
+    perspective: 1400px;
+}
+.book-open {
+    display: flex; width: 100%;
+    border-radius: 4px 6px 6px 4px;
+    box-shadow: 0 24px 64px rgba(26,46,34,0.40), 0 8px 24px rgba(26,46,34,0.22);
+    transform-style: preserve-3d;
+    position: relative; overflow: hidden;
+    min-height: 520px;
+}
+.book-spine {
+    width: 14px; flex-shrink: 0;
+    background: linear-gradient(180deg, #4A7060 0%, #2C5244 45%, #4A7060 100%);
+    box-shadow: inset -3px 0 6px rgba(0,0,0,0.25), inset 3px 0 4px rgba(255,255,255,0.08);
+}
+.book-left-page {
+    flex: 1; background: linear-gradient(160deg, #FFFEF5 0%, #FDF9EE 100%);
+    padding: 36px 28px 28px;
+    border-right: 1px solid rgba(180,155,130,0.22);
+    position: relative; overflow: hidden;
+}
+.book-right-page {
+    flex: 1; background: linear-gradient(160deg, #FFFEF5 0%, #FDF9EE 100%);
+    padding: 36px 28px 28px;
+    position: relative; overflow: hidden;
+    transform-style: preserve-3d;
+    transform-origin: left center;
+    transition: transform 1.0s cubic-bezier(0.645, 0.045, 0.355, 1.0);
+}
+.book-right-page.flipping { transform: rotateY(-180deg); }
+.page-lines {
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(
+        to bottom, transparent 0px, transparent 35px, rgba(170,145,120,0.18) 36px
+    );
+    pointer-events: none;
+}
+.book-brand { text-align: center; padding-top: 60px; position: relative; z-index: 1; }
+.book-brand-logo { font-size: 52px; margin-bottom: 14px; }
+.book-brand-title { font-family: 'Lora', serif; font-size: 19px; color: #2C5244; font-weight: 600; margin-bottom: 5px; }
+.book-brand-sub { font-size: 10px; color: #8A9B94; letter-spacing: 0.10em; text-transform: uppercase; }
+.book-left-page::after {
+    content: ''; position: absolute; bottom: 0; right: 0;
+    width: 36px; height: 36px;
+    background: linear-gradient(225deg, #F5EDE0 50%, transparent 50%);
+    opacity: 0.7;
+}
+.book-date-header {
+    font-family: 'Lora', serif; font-size: 12px; color: #8A9B94;
+    text-align: center; font-style: italic;
+    border-bottom: 1px solid rgba(170,145,120,0.22);
+    padding-bottom: 10px; margin-bottom: 4px;
+    position: relative; z-index: 1;
+}
+.book-textarea {
+    width: 100%; border: none; outline: none; resize: none;
+    background: transparent;
+    font-family: 'Lora', serif; font-size: 14px; color: #2C3E35;
+    line-height: 36px; min-height: 360px;
+    position: relative; z-index: 1;
+    caret-color: #4A7C6F;
+}
+.book-save-row {
+    margin-top: 16px; display: flex; gap: 10px;
+    position: relative; z-index: 1;
+}
+.book-save-btn {
+    flex: 1; padding: 11px;
+    background: linear-gradient(135deg, #4A8272, #2E5E50);
+    color: white; border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 3px 12px rgba(46,94,80,0.3);
+    transition: all 0.2s;
+}
+.book-save-btn:hover { background: linear-gradient(135deg, #5A9282, #3A6E60); transform: translateY(-1px); }
+.book-skip-btn {
+    padding: 11px 16px;
+    background: rgba(255,255,255,0.7); color: #8A9B94;
+    border: 1px solid rgba(212,201,187,0.6); border-radius: 10px;
+    font-size: 13px; cursor: pointer; font-family: 'Inter', sans-serif;
+}
+.page-num { position: absolute; bottom: 14px; font-size: 9px; color: rgba(140,115,90,0.4); font-style: italic; }
+.book-left-page .page-num { right: 22px; }
+.book-right-page .page-num { left: 22px; }
+
+/* Book cover animation (pre-open) */
+.book-cover-panel {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: calc(50% + 7px);
+    background: linear-gradient(145deg, #3A7060 0%, #2A5248 55%, #1E3C30 100%);
+    border-radius: 0 6px 6px 0;
+    transform-origin: left center;
+    transform: rotateY(0deg);
+    transition: transform 1.0s cubic-bezier(0.645, 0.045, 0.355, 1.0) 0.4s;
+    z-index: 20;
+    display: flex; align-items: center; justify-content: center;
+    backface-visibility: hidden;
+}
+.book-cover-panel.open { transform: rotateY(-170deg); pointer-events: none; }
+.book-cover-inner { text-align: center; padding: 24px; }
+.book-cover-logo { font-size: 56px; margin-bottom: 16px; }
+.book-cover-title { font-family: 'Lora', serif; font-size: 22px; color: white; font-weight: 600; margin-bottom: 6px; }
+.book-cover-sub { font-size: 10px; color: rgba(255,255,255,0.65); letter-spacing: 0.12em; text-transform: uppercase; }
+
+/* Book reading page navigation */
+.book-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; max-width: 720px; margin-left: auto; margin-right: auto; }
+.book-nav-btn {
+    background: rgba(255,255,255,0.75); backdrop-filter: blur(10px);
+    border: 1px solid rgba(212,201,187,0.5); border-radius: 12px;
+    padding: 10px 20px; font-size: 13px; color: #4A7C6F;
+    cursor: pointer; font-weight: 600; font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+}
+.book-nav-btn:hover { background: rgba(232,244,239,0.9); transform: translateY(-1px); }
+.book-nav-btn:disabled { opacity: 0.3; cursor: default; transform: none; }
+.book-page-counter { font-size: 11px; color: #8A9B94; }
+.entry-read-meta { font-size: 10px; color: #8A9B94; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+.entry-read-content {
+    font-family: 'Lora', serif; font-style: italic;
+    font-size: 14px; color: #2C3E35; line-height: 36px;
+    position: relative; z-index: 1;
+    overflow-y: auto; max-height: 400px;
+}
+@media (max-width: 640px) {
+    .book-left-page { display: none; }
+    .book-spine { display: none; }
+    .book-cover-panel { width: 100%; border-radius: 8px; }
+    .book-right-page { border-radius: 8px; }
+    .book-open { border-radius: 8px; }
+}
+
+/* Other mood input */
+.other-mood-box {
+    display: none; margin-top: 10px;
+    animation: fade-in-up 0.2s ease;
+}
+.other-mood-box.visible { display: block; }
+.other-mood-input {
+    width: 100%; padding: 12px 14px;
+    background: rgba(255,255,255,0.8); backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(74,124,111,0.4); border-radius: 12px;
+    font-family: 'Lora', serif; font-size: 14px; color: #2C3E35;
+    outline: none;
+}
+.other-mood-input:focus { border-color: #4A7C6F; box-shadow: 0 0 0 3px rgba(74,124,111,0.12); }
+.other-mood-input::placeholder { color: #B4A99A; font-style: italic; }
+
 /* ── Onboarding overlay ── */
 .onboarding-overlay {
     position: fixed;
@@ -1046,6 +1293,14 @@ async def home(request: Request):
         "<span class='emoji'>😴</span>Tired</div>"
         "<div class='mood-chip' onclick='toggleMood(this,\"Uncomfortable\")'>"
         "<span class='emoji'>😣</span>Uncomfortable</div>"
+        "<div class='mood-chip' onclick='toggleOther(this)'>"
+        "<span class='emoji'>✏️</span>Other</div>"
+        "</div>"
+        "<div class='other-mood-box' id='other-box'>"
+        "<input class='other-mood-input' id='other-mood-input' type='text' "
+        "placeholder='How are you feeling today? e.g. nostalgic, restless…' "
+        "oninput='document.getElementById(\"mood-value\").value = "
+        "Array.from(selected).concat(this.value.trim()?[this.value.trim()]:[]).join(\",\") || \"Okay\"'>"
         "</div>"
         "<input type='hidden' name='mood' id='mood-value' value='Okay'>"
         "<label class='label'>Tell Bloom how you are feeling (optional)</label>"
@@ -1058,17 +1313,34 @@ async def home(request: Request):
         "<script>"
         "const selected = new Set();"
         "function toggleMood(el, mood) {"
-        "  if (selected.has(mood)) {"
-        "    selected.delete(mood);"
-        "    el.classList.remove('selected');"
-        "  } else {"
-        "    selected.add(mood);"
-        "    el.classList.add('selected');"
-        "  }"
-        "  const arr = Array.from(selected);"
-        "  document.getElementById('mood-value').value = "
-        "    arr.length > 0 ? arr.join(',') : 'Okay';"
+        "  if (selected.has(mood)) { selected.delete(mood); el.classList.remove('selected'); }"
+        "  else { selected.add(mood); el.classList.add('selected'); }"
+        "  syncMoodValue();"
         "}"
+        "function toggleOther(el) {"
+        "  var box = document.getElementById('other-box');"
+        "  if (el.classList.contains('selected')) {"
+        "    el.classList.remove('selected');"
+        "    box.classList.remove('visible');"
+        "    document.getElementById('other-mood-input').value = '';"
+        "  } else {"
+        "    el.classList.add('selected');"
+        "    box.classList.add('visible');"
+        "    document.getElementById('other-mood-input').focus();"
+        "  }"
+        "  syncMoodValue();"
+        "}"
+        "function syncMoodValue() {"
+        "  var arr = Array.from(selected);"
+        "  var otherEl = document.getElementById('other-box');"
+        "  var otherInput = document.getElementById('other-mood-input');"
+        "  if (otherEl.classList.contains('visible') && otherInput.value.trim()) {"
+        "    arr.push(otherInput.value.trim());"
+        "  }"
+        "  document.getElementById('mood-value').value = arr.length > 0 ? arr.join(',') : 'Okay';"
+        "}"
+        "document.getElementById('other-mood-input') && "
+        "document.getElementById('other-mood-input').addEventListener('input', syncMoodValue);"
         "</script>"
     )
     return _with_visitor_cookie(
@@ -1200,7 +1472,9 @@ async def checkin(
         "<span class='section-dot'></span>"
         "Today's plan — 25 minutes, all for you"
         "</div>"
+        "<div class='activities-grid'>"
         f"{b_card}{j_card}{bc_card}"
+        "</div>"
         # Streak
         "<div class='streak'>"
         f"<div class='streak-item'><span>{current_streak}</span>day streak</div>"
@@ -1235,26 +1509,70 @@ async def write_page(
     title_text     = "Letter to Baby" if is_letter else "Journal"
     entry_type_val = "letter" if is_letter else "journal"
     placeholder    = (
-        "Dear little one,\n\n"
+        "Dear little one,\n\nI want you to know…"
         if is_letter
-        else "Write freely — no rules, just honest words...\n"
+        else "Write freely — no rules, just honest words…"
     )
+    today_fmt = datetime.date.today().strftime("%B %d, %Y")
+    week_label = f"Week {week}" if week else ""
 
     content = (
         "<a href='/' class='back-link'>← Back</a>"
-        f"<h2>{title_text} — Week {week}</h2>"
-        "<p style='margin-bottom:16px;font-size:13px;color:#8A9B94;'>"
-        "This will be saved to your Baby Book.</p>"
-        "<form method='POST' action='/save-entry'>"
+        "<div class='book-scene'>"
+        # Open book wrapper
+        "<div class='book-open'>"
+        # Left page — branding/decorative
+        "<div class='book-left-page'>"
+        "<div class='page-lines'></div>"
+        "<div class='book-brand'>"
+        "<div class='book-brand-logo'>🌸</div>"
+        "<div class='book-brand-title'>Mama Bloom</div>"
+        "<div class='book-brand-sub'>Baby Book</div>"
+        "</div>"
+        "<span class='page-num'>1</span>"
+        "</div>"
+        # Spine
+        "<div class='book-spine'></div>"
+        # Right page — writing area
+        "<div class='book-right-page' id='writing-page'>"
+        "<div class='page-lines'></div>"
+        f"<div class='book-date-header'>{week_label} &nbsp;·&nbsp; {today_fmt}</div>"
+        "<form method='POST' action='/save-entry' id='book-form'>"
         f"<input type='hidden' name='entry_type' value='{entry_type_val}'>"
         f"<input type='hidden' name='week' value='{week}'>"
         f"<input type='hidden' name='activity_id' value='{html.escape(activity_id)}'>"
-        f"<textarea class='write-area' name='content' "
+        f"<textarea class='book-textarea' name='content' id='book-textarea' "
         f"placeholder='{placeholder}'></textarea>"
-        "<button type='submit' class='btn'>Save to Baby Book 💌</button>"
-        "<button type='button' class='btn-outline' "
-        "onclick=\"window.location='/'\">Skip for today</button>"
+        "<div class='book-save-row'>"
+        "<button type='button' class='book-save-btn' onclick='flipAndSave()'>Save to Baby Book 💌</button>"
+        "<button type='button' class='book-skip-btn' onclick=\"window.location='/'\">Skip</button>"
+        "</div>"
         "</form>"
+        "<span class='page-num'>2</span>"
+        "</div>"
+        # Cover panel — animates open on load
+        "<div class='book-cover-panel' id='book-cover'>"
+        "<div class='book-cover-inner'>"
+        "<div class='book-cover-logo'>🌸</div>"
+        "<div class='book-cover-title'>Mama Bloom</div>"
+        "<div class='book-cover-sub'>Baby Book</div>"
+        "</div>"
+        "</div>"
+        "</div>"  # .book-open
+        "</div>"  # .book-scene
+        "<script>"
+        "setTimeout(function() {"
+        "  document.getElementById('book-cover').classList.add('open');"
+        "  setTimeout(function() { document.getElementById('book-textarea').focus(); }, 900);"
+        "}, 350);"
+        "function flipAndSave() {"
+        "  if (!document.getElementById('book-textarea').value.trim()) {"
+        "    document.getElementById('book-textarea').focus(); return;"
+        "  }"
+        "  document.getElementById('writing-page').classList.add('flipping');"
+        "  setTimeout(function() { document.getElementById('book-form').submit(); }, 950);"
+        "}"
+        "</script>"
     )
     return HTMLResponse(base_page(content, title_text))
 
@@ -1325,48 +1643,151 @@ async def babybook(request: Request):
 
     nb = nav_bar("book")
 
+    type_label_map = {
+        "letter":     "💌 Letter to baby",
+        "journal":    "📓 Journal",
+        "reflection": "🌿 Reflection",
+        "milestone":  "⭐ Milestone",
+    }
+
+    # Build pages list — each entry becomes one "right page"
+    # For an empty book show a cover-only state
+    book_pages_js = "[]"
+    if entries:
+        pages = []
+        for e in reversed(entries):
+            entry_type = e.get("entry_type", "entry")
+            type_label = type_label_map.get(entry_type, entry_type.capitalize())
+            raw = str(e.get("content", ""))
+            # Full content, html-escaped, newlines → \n for JS strings
+            safe = html.escape(raw).replace("\r\n", "\n").replace("\n", "\\n").replace("'", "\\'")
+            week_str = html.escape(str(e.get("week", "")))
+            date_str = html.escape(str(e.get("date", "")))
+            label_safe = html.escape(type_label)
+            pages.append(f"{{meta:'Week {week_str} · {date_str} · {label_safe}',text:'{safe}'}}")
+        book_pages_js = "[" + ",".join(pages) + "]"
+
     if not entries:
-        items = (
-            "<div style='text-align:center;padding:48px 0;'>"
-            "<div style='font-size:52px;margin-bottom:16px;'>💌</div>"
-            "<h2 style='margin-bottom:10px;'>Your Baby Book is waiting.</h2>"
-            "<p>Complete your first session and write your first letter "
-            "to start building your baby's story.</p>"
-            "<a href='/'><button class='btn' style='margin-top:24px;'>"
+        book_html = (
+            "<div class='book-scene'>"
+            "<div class='book-open' style='min-height:440px;'>"
+            "<div class='book-left-page'>"
+            "<div class='page-lines'></div>"
+            "<div class='book-brand'>"
+            "<div class='book-brand-logo'>🌸</div>"
+            "<div class='book-brand-title'>Mama Bloom</div>"
+            "<div class='book-brand-sub'>Baby Book</div>"
+            "</div>"
+            "<span class='page-num'>1</span>"
+            "</div>"
+            "<div class='book-spine'></div>"
+            "<div class='book-right-page'>"
+            "<div class='page-lines'></div>"
+            "<div style='display:flex;flex-direction:column;align-items:center;"
+            "justify-content:center;height:100%;gap:16px;position:relative;z-index:1;'>"
+            "<div style='font-size:40px;'>💌</div>"
+            "<div style='font-family:Lora,serif;font-size:16px;color:#2C3E35;"
+            "text-align:center;font-style:italic;line-height:1.6;'>"
+            "Your Baby Book is waiting.<br>Start writing your first letter.</div>"
+            "<a href='/'><button class='book-save-btn' style='margin-top:8px;'>"
             "Start today 🌸</button></a>"
             "</div>"
+            "<span class='page-num'>2</span>"
+            "</div>"
+            "</div>"
+            "</div>"
         )
+        nav_html = ""
     else:
-        type_label_map = {
-            "letter":     "💌 Letter to baby",
-            "journal":    "📓 Journal",
-            "reflection": "🌿 Weekly reflection",
-            "milestone":  "⭐ Milestone",
-        }
-        items = ""
-        for e in reversed(entries):
-            entry_type  = e.get("entry_type", "entry")
-            type_label  = type_label_map.get(entry_type, html.escape(entry_type.capitalize()))
-            raw         = str(e.get("content", ""))
-            preview     = raw[:220] + ("…" if len(raw) > 220 else "")
-            # html.escape: stored content the mother wrote on /write - this
-            # is persisted to disk and re-rendered on every /babybook load,
-            # so it must never be trusted as safe HTML.
-            items += (
-                "<div class='entry-card'>"
-                "<div class='entry-meta'>"
-                f"Week {html.escape(str(e.get('week', '')))} &nbsp;·&nbsp;"
-                f"{html.escape(str(e.get('date', '')))} &nbsp;·&nbsp;"
-                f"{type_label}</div>"
-                f"<div class='entry-content'>{html.escape(preview)}</div>"
-                "</div>"
-            )
+        book_html = (
+            "<div class='book-scene'>"
+            "<div class='book-open' id='book-spread' style='min-height:500px;'>"
+            # Left page — shows current entry
+            "<div class='book-left-page' id='left-page'>"
+            "<div class='page-lines'></div>"
+            "<div style='position:relative;z-index:1;'>"
+            "<div class='entry-read-meta' id='left-meta'></div>"
+            "<div class='entry-read-content' id='left-text'></div>"
+            "</div>"
+            "<span class='page-num' id='left-num'></span>"
+            "</div>"
+            "<div class='book-spine'></div>"
+            # Right page — shows next entry
+            "<div class='book-right-page' id='right-page'>"
+            "<div class='page-lines'></div>"
+            "<div style='position:relative;z-index:1;'>"
+            "<div class='entry-read-meta' id='right-meta'></div>"
+            "<div class='entry-read-content' id='right-text'></div>"
+            "</div>"
+            "<span class='page-num' id='right-num'></span>"
+            "</div>"
+            "</div>"
+            "</div>"
+        )
+        nav_html = (
+            "<div class='book-nav'>"
+            "<button class='book-nav-btn' id='prev-btn' onclick='flipBack()'>← Previous</button>"
+            "<span class='book-page-counter' id='page-counter'></span>"
+            "<button class='book-nav-btn' id='next-btn' onclick='flipForward()'>Next →</button>"
+            "</div>"
+            "<div style='text-align:center;margin-top:18px;'>"
+            "<a href='/write?type=letter&week=0'>"
+            "<button class='btn' style='max-width:280px;margin:0 auto;display:block;'>"
+            "Add a new letter 💌</button></a>"
+            "</div>"
+        )
+
+    js_block = (
+        "<script>"
+        f"var PAGES = {book_pages_js};"
+        "var spread = 0;"  # 0 = showing pages 0&1, 2 = showing 2&3, etc.
+        "function renderSpread() {"
+        "  if (!PAGES.length) return;"
+        "  var lp = PAGES[spread] || null;"
+        "  var rp = PAGES[spread+1] || null;"
+        "  var lMeta=document.getElementById('left-meta'),"
+        "      lText=document.getElementById('left-text'),"
+        "      rMeta=document.getElementById('right-meta'),"
+        "      rText=document.getElementById('right-text'),"
+        "      lNum=document.getElementById('left-num'),"
+        "      rNum=document.getElementById('right-num'),"
+        "      ctr=document.getElementById('page-counter'),"
+        "      prev=document.getElementById('prev-btn'),"
+        "      nxt=document.getElementById('next-btn');"
+        "  if (lMeta) lMeta.textContent = lp ? lp.meta : '';"
+        "  if (lText) lText.textContent = lp ? lp.text : '';"
+        "  if (rMeta) rMeta.textContent = rp ? rp.meta : '';"
+        "  if (rText) rText.textContent = rp ? rp.text : '';"
+        "  if (lNum)  lNum.textContent  = lp ? (spread+1) : '';"
+        "  if (rNum)  rNum.textContent  = rp ? (spread+2) : '';"
+        "  if (ctr)   ctr.textContent   = 'Entries ' + (spread+1) + '–' + Math.min(spread+2, PAGES.length) + ' of ' + PAGES.length;"
+        "  if (prev)  prev.disabled = spread === 0;"
+        "  if (nxt)   nxt.disabled  = spread+2 >= PAGES.length;"
+        "}"
+        "function flipForward() {"
+        "  if (spread+2 >= PAGES.length) return;"
+        "  var rp = document.getElementById('right-page');"
+        "  if (rp) { rp.classList.add('flipping'); }"
+        "  setTimeout(function() {"
+        "    spread += 2; renderSpread();"
+        "    if (rp) rp.classList.remove('flipping');"
+        "  }, 500);"
+        "}"
+        "function flipBack() {"
+        "  if (spread === 0) return;"
+        "  spread = Math.max(0, spread - 2); renderSpread();"
+        "}"
+        "renderSpread();"
+        "</script>"
+    ) if entries else ""
 
     content = (
         f"{nb}"
         "<h1>Your Baby Book</h1>"
         "<p class='subtitle'>Letters and reflections, building week by week.</p>"
-        f"{items}"
+        f"{book_html}"
+        f"{nav_html}"
+        f"{js_block}"
     )
     return _with_visitor_cookie(HTMLResponse(base_page(content, "Baby Book")), visitor_id)
 
@@ -1379,81 +1800,131 @@ async def calendar_page(request: Request):
     except Exception:
         sessions = []
 
-    mood_colors = {
-        "heavy":         "#FDF0EC",
-        "sad":           "#FDF0EC",
-        "okay":          "#EDF4F0",
-        "good":          "#D4E8DC",
-        "glowing":       "#C0DDD0",
-        "tired":         "#FDF5E6",
-        "uncomfortable": "#FDF5E6",
+    mood_emojis = {
+        "heavy": "😔", "sad": "😔", "anxious": "😰",
+        "okay": "😐", "neutral": "😐",
+        "good": "🌸", "happy": "😊",
+        "glowing": "✨", "joyful": "✨",
+        "tired": "😴", "exhausted": "😴",
+        "uncomfortable": "😣", "sore": "😣",
     }
 
     session_map: dict = {}
     for s in sessions:
         date = s.get("date", "")
-        mood = s.get("mood", "okay").lower().split(",")[0].strip()
         if date:
-            session_map[date] = mood
+            session_map[date] = s  # store full session for detail modal
 
     today     = datetime.date.today()
     today_str = today.isoformat()
+
+    # Build 7-col grid aligned to Monday
+    # First find the Monday of the 6-week block ending today
+    block_end   = today
+    block_start = block_end - datetime.timedelta(days=41)
+    # Pad to Monday
+    start_weekday = block_start.weekday()  # 0=Mon
+    grid_start    = block_start - datetime.timedelta(days=start_weekday)
+
     days_html = ""
+    d = grid_start
+    while d <= block_end or (d - block_end).days < 7:
+        day_str = d.isoformat()
+        sess    = session_map.get(day_str)
+        is_today   = day_str == today_str
+        is_future  = d > today
+        is_in_range = block_start <= d <= block_end
 
-    for i in range(41, -1, -1):
-        day     = today - datetime.timedelta(days=i)
-        day_str = day.isoformat()
-        mood    = session_map.get(day_str, "")
-        color   = mood_colors.get(mood, "white")
-        border  = (
-            "2px solid #4A7C6F"
-            if day_str == today_str
-            else "1px solid #E8E0D8"
-        )
-        dot_html = (
-            "<div style='width:6px;height:6px;border-radius:50%;"
-            "background:#4A7C6F;margin:2px auto;'></div>"
-            if mood else ""
-        )
-        days_html += (
-            f"<div style='background:{color};border:{border};"
-            "border-radius:6px;padding:4px 2px;"
-            f"text-align:center;font-size:11px;color:#5C6B64;'>"
-            f"{day.day}{dot_html}</div>"
-        )
+        if not is_in_range:
+            # filler cell
+            days_html += "<div class='cal-day' style='opacity:0.2;cursor:default;'></div>"
+        elif is_future:
+            days_html += (
+                f"<div class='cal-day' style='opacity:0.35;cursor:default;'>"
+                f"<span class='cal-day-num' style='color:#B4A99A;'>{d.day}</span>"
+                "</div>"
+            )
+        elif sess:
+            raw_mood = str(sess.get("mood", "okay")).lower().split(",")[0].strip()
+            emoji    = mood_emojis.get(raw_mood, "🌿")
+            acts     = sess.get("activities", [])
+            if isinstance(acts, list):
+                acts_str = "|".join(
+                    html.escape(str(a.get("name", "")))
+                    for a in acts if isinstance(a, dict)
+                )
+            else:
+                acts_str = ""
+            week_num  = html.escape(str(sess.get("week", "")))
+            mood_disp = html.escape(raw_mood.capitalize())
+            today_cls = " today" if is_today else ""
+            days_html += (
+                f"<div class='cal-day has-entry{today_cls}' "
+                f"onclick=\"openDayModal('{html.escape(day_str)}','{mood_disp}','{emoji}','{week_num}','{acts_str}')\">"
+                f"<span class='cal-day-num'>{d.day}</span>"
+                f"<span class='cal-day-emoji'>{emoji}</span>"
+                "</div>"
+            )
+        else:
+            today_cls = " today" if is_today else ""
+            days_html += (
+                f"<div class='cal-day{today_cls}'>"
+                f"<span class='cal-day-num'>{d.day}</span>"
+                "</div>"
+            )
 
-    legend = (
-        "<div style='display:flex;gap:14px;flex-wrap:wrap;"
-        "margin:12px 0 16px;font-size:11px;color:#5C6B64;'>"
-        + "".join(
-            f"<span style='display:flex;align-items:center;gap:4px;'>"
-            f"<span style='width:10px;height:10px;border-radius:2px;"
-            f"background:{c};display:inline-block;border:1px solid #D4C9BB;'></span>{label}</span>"
-            for label, c in [
-                ("Good", "#D4E8DC"), ("Okay", "#EDF4F0"),
-                ("Heavy", "#FDF0EC"), ("Tired", "#FDF5E6"),
-            ]
-        )
-        + "</div>"
+        d += datetime.timedelta(days=1)
+        if d > block_end and d.weekday() == 0:
+            break
+
+    legend_items = "".join(
+        f"<span class='cal-legend-item'>{e} {lbl}</span>"
+        for e, lbl in [("😔","Heavy"), ("😐","Okay"), ("🌸","Good"), ("✨","Glowing"), ("😴","Tired")]
     )
 
     nb = nav_bar("calendar")
     content = (
         f"{nb}"
         "<h1>Your journey</h1>"
-        "<p class='subtitle'>Every day you showed up for your baby.</p>"
-        f"{legend}"
-        "<div style='display:grid;grid-template-columns:repeat(7,1fr);"
-        "gap:4px;margin-bottom:24px;'>"
-        + "".join(
-            f"<div style='text-align:center;font-size:10px;"
-            f"color:#8A9B94;padding:4px;'>{d}</div>"
-            for d in ["M", "T", "W", "T", "F", "S", "S"]
-        )
+        "<p class='subtitle'>Every day you showed up for your baby. Tap a day to see what you felt.</p>"
+        f"<div class='cal-legend'>{legend_items}</div>"
+        "<div class='cal-grid'>"
+        + "".join(f"<div class='cal-header'>{d}</div>" for d in ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"])
         + days_html
         + "</div>"
-        "<a href='/babybook'>"
-        "<button class='btn-outline'>Open Baby Book 💌</button></a>"
+        "<a href='/babybook'><button class='btn-outline'>Open Baby Book 💌</button></a>"
+        # Detail modal
+        "<div class='cal-modal-bg' id='cal-modal-bg' onclick='closeDayModal(event)'>"
+        "<div class='cal-modal'>"
+        "<button class='cal-modal-close' onclick='document.getElementById(\"cal-modal-bg\").classList.remove(\"open\")'>×</button>"
+        "<div class='cal-modal-date' id='modal-date'></div>"
+        "<div class='cal-modal-emoji' id='modal-emoji'></div>"
+        "<div class='cal-modal-mood' id='modal-mood'></div>"
+        "<div class='cal-modal-week' id='modal-week'></div>"
+        "<div class='cal-modal-acts' id='modal-acts'></div>"
+        "</div>"
+        "</div>"
+        "<script>"
+        "function openDayModal(date, mood, emoji, week, actsStr) {"
+        "  document.getElementById('modal-date').textContent = date;"
+        "  document.getElementById('modal-emoji').textContent = emoji;"
+        "  document.getElementById('modal-mood').textContent = 'Feeling: ' + mood;"
+        "  document.getElementById('modal-week').textContent = week ? 'Week ' + week : '';"
+        "  var actsEl = document.getElementById('modal-acts');"
+        "  actsEl.innerHTML = '';"
+        "  if (actsStr) {"
+        "    actsStr.split('|').forEach(function(a) {"
+        "      if (a) { var s = document.createElement('span');"
+        "        s.className='cal-modal-act'; s.textContent=a;"
+        "        actsEl.appendChild(s); }"
+        "    });"
+        "  }"
+        "  document.getElementById('cal-modal-bg').classList.add('open');"
+        "}"
+        "function closeDayModal(e) {"
+        "  if (e.target.id === 'cal-modal-bg') document.getElementById('cal-modal-bg').classList.remove('open');"
+        "}"
+        "</script>"
     )
     return _with_visitor_cookie(HTMLResponse(base_page(content, "Your Journey")), visitor_id)
 
