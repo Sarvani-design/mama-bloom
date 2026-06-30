@@ -49,7 +49,7 @@ MORNING_AFFIRMATIONS = [
     "Every calm breath I take sends peace and oxygen directly to my baby.",
     "My thoughts and feelings shape the world my baby is growing into.",
     "I choose peace today, and my baby feels it.",
-    "My body knows exactly what it is doing. I trust this ancient wisdom.",
+    "My body knows exactly what it is doing. I trust this process completely.",
     "With each heartbeat, I send love to the little life growing inside me.",
     # Mood-adaptive compassion
     "Even on hard days, I am still nourishing my baby beautifully.",
@@ -248,7 +248,7 @@ BABY_CONNECT_ACTIVITIES = [
         "name": "Story Time",
         "category": "Baby Connect",
         "description": "Reading a book or telling a simple story aloud so your baby can hear your voice.",
-        "prompt": "Pick a favorite childhood story, a scripture passage (Gita, Ramayana), or a children's book. Read slowly and clearly to your baby.",
+        "prompt": "Pick a favorite childhood story, a poem, or a few pages of any book you love. Read slowly and clearly to your baby. Your voice is the music.",
         "week_min": 18,
         "science_note": "Rhythmic cadence of reading calms the maternal HPA axis and familiarises the baby with speech patterns before birth.",
         "pillar": "Bonding",
@@ -258,10 +258,10 @@ BABY_CONNECT_ACTIVITIES = [
         "name": "Humming & Singing",
         "category": "Baby Connect",
         "description": "Humming a calm melody or singing a soft lullaby to share your breath's vibration.",
-        "prompt": "Hum a gentle tune or sing a Telugu or Hindi lullaby. Rest your hand on your belly to feel the resonance. Repeat the same melody daily — your baby is building memory.",
+        "prompt": "Hum a gentle tune or sing a lullaby you love. Rest your hand gently on your belly. Repeat the same melody daily — your baby is building memory of your voice.",
         "week_min": 18,
-        "science_note": "Maternal humming transmits vibration through amniotic fluid directly to baby. Builds fetal memory for lullabies (Garbha Sanskar).",
-        "pillar": "Garbha Sanskar",
+        "science_note": "Maternal humming transmits vibration through amniotic fluid directly to baby. Builds fetal sound memory and strengthens the bond.",
+        "pillar": "Bonding",
     },
     {
         "id": "conversation_with_baby",
@@ -309,16 +309,16 @@ CREATIVE_ALTERNATES = [
     },
 ]
 
-# Calming music / raga activity (for tired/uncomfortable moods)
+# Calming music activity (for tired/uncomfortable moods)
 MUSIC_ACTIVITY = {
     "id": "calming_music",
-    "name": "Calming Raga & Music",
+    "name": "Calming Music",
     "category": "Music",
-    "description": "Listening to gentle, rhythmic Indian classical music or a calming raga to relax the mind and body.",
-    "prompt": "Play a calming raga — Bhairavi, Yaman, or Darbari Kanada — or any soft instrumental music. Place your hand gently on your belly. Close your eyes and simply listen for 5–10 minutes. You do not need to do anything else.",
+    "description": "Listening to gentle, instrumental music to relax the mind and body.",
+    "prompt": "Play any soft instrumental or ambient music — whatever feels calming to you. Place your hand gently on your belly. Close your eyes and simply listen for 5–10 minutes. You do not need to do anything else.",
     "moods": ["tired", "uncomfortable"],
-    "science_note": "Music modulates fetal Autonomic Nervous System, enhancing Heart Rate Variability near term (PMC 2022). Indian ragas Bhairavi and Yaman are recommended in Garbha Sanskar for their calming effect.",
-    "pillar": "Garbha Sanskar",
+    "science_note": "Music modulates the fetal Autonomic Nervous System, enhancing Heart Rate Variability near term (PMC 2022). Gentle, repetitive melodies induce a parasympathetic state in both mother and baby.",
+    "pillar": "Relaxation",
 }
 
 # Research-based free-text keyword overrides (from MBCP + Garbha Sanskar matrix).

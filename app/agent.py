@@ -187,8 +187,7 @@ def intro_writer(
         else:
             client = genai.Client(vertexai=True, project=project, location=location)
         # Single call generates all three personalised texts so they are
-        # always fresh, mood-aware, and culturally grounded (MBCP + Garbha Sanskar).
-        # Sections are delimited by ### so parsing never relies on line counts.
+        # always fresh and mood-aware. Sections delimited by ### for robust parsing.
         user_prompt = (
             f"Week: {week} | Mood: {mood_context}\n\n"
             f"Generate exactly three sections separated by ### (no other text between them):\n"

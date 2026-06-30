@@ -523,7 +523,10 @@ textarea { height: 80px; resize: none; }
     width: 100%;
 }
 .onboarding-slide { display: none; }
-.onboarding-slide.active { display: block; }
+.onboarding-slide.active { display: block; animation: ob-slide-in 0.35s ease; }
+@keyframes ob-slide-in { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: translateX(0); } }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #D4C9BB; transition: background 0.25s, transform 0.25s; }
+.dot.active { background: #4A7C6F; transform: scale(1.25); }
 .onboarding-flower {
     font-size: 56px;
     text-align: center;
@@ -552,13 +555,6 @@ textarea { height: 80px; resize: none; }
     gap: 6px;
     margin-bottom: 20px;
 }
-.dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: #D4C9BB;
-    transition: background 0.2s;
-}
-.dot.active { background: #4A7C6F; }
 .pref-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -633,9 +629,8 @@ def base_page(content: str, title: str = "Mama Bloom", force_onboarding: bool = 
     document.querySelectorAll('.onboarding-slide').forEach(function(el, i) {
       el.classList.toggle('active', i === n);
     });
-    document.querySelectorAll('.dot').forEach(function(el, i) {
-      el.classList.toggle('active', i === n);
-    });
+    // Each slide has its own hardcoded dot group already correct in HTML —
+    // only the active slide's dots are visible, so no JS toggling needed.
     slide = n;
   }
 
@@ -1043,6 +1038,20 @@ async def checkin(
 
     content = (
         f"{nb}"
+        # Session overview — mood + week summary at the top
+        "<div style='background:white;border-radius:14px;border:1px solid #E8E0D8;"
+        "padding:16px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;'>"
+        "<div style='flex:1;'>"
+        f"<div style='font-size:20px;font-weight:600;color:#2C3E35;font-family:Lora,serif;'>"
+        f"Week {week}</div>"
+        f"<div style='font-size:13px;color:#8A9B94;margin-top:2px;'>"
+        f"Feeling: {mood_display}</div>"
+        "</div>"
+        "<div style='text-align:right;'>"
+        "<div style='font-size:12px;color:#4A7C6F;font-weight:500;'>25 min plan ready</div>"
+        f"<div style='font-size:11px;color:#B4A99A;margin-top:2px;'>{current_streak} day streak</div>"
+        "</div>"
+        "</div>"
         # Morning affirmation — full-width, serene
         "<div class='card-green'>"
         "<div class='label-small'>Read this slowly</div>"
@@ -1050,10 +1059,6 @@ async def checkin(
         "</div>"
         f"{intro_html}"
         f"{milestone_html}"
-        # Mood context
-        "<div style='margin-bottom:10px;'>"
-        f"<span style='font-size:12px;color:#8A9B94;'>Feeling today: {mood_display}</span>"
-        "</div>"
         # Activity cards
         "<h3>Today's plan — 25 minutes, all for you</h3>"
         f"{b_card}{j_card}{bc_card}"
